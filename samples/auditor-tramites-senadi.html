@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Auditor de Trámites SENADI · Ulpik</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --naranja:#ff2500;
+    --verde:#00adb0;
+    --morado:#823bda;
+    --crema:#f8ede2;
+    --tinta:#1c1512;
+    --tinta-suave:#6b5d54;
+    --linea:#e7dccc;
+    --blanco:#fffdfa;
+    --ok-bg:#e8f6f0;
+    --ok-linea:#00adb0;
+    --alerta-bg:#fff4ed;
+    --alerta-linea:#ff2500;
+    --duda-bg:#fdf6e3;
+    --duda-linea:#c99a1e;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--crema);
+    color:var(--tinta);
+    font-family:'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  @font-face{
+    font-family:'Playfair Display';
+    src:local('Playfair Display');
+  }
+  .display{
+    font-family:'Playfair Display', Georgia, serif;
+  }
+  .wrap{
+    max-width:920px;
+    margin:0 auto;
+    padding:36px 22px 80px;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:10px;
+    padding-bottom:22px;
+    border-bottom:2px solid var(--tinta);
+    margin-bottom:28px;
+  }
+  header .brand{
+    font-family:'Playfair Display', Georgia, serif;
+    font-size:15px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--tinta-suave);
+  }
+  h1{
+    font-family:'Playfair Display', Georgia, serif;
+    font-size:34px;
+    font-weight:700;
+    margin:4px 0 0;
+    line-height:1.1;
+  }
+  .lede{
+    font-size:15px;
+    color:var(--tinta-suave);
+    max-width:60ch;
+    margin:10px 0 0;
+    line-height:1.55;
+  }
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    margin-bottom:30px;
+    border-bottom:1px solid var(--linea);
+  }
+  nav.tabs button{
+    appearance:none;
+    border:none;
+    background:none;
+    font-family:'DM Sans', sans-serif;
+    font-size:14px;
+    font-weight:700;
+    color:var(--tinta-suave);
+    padding:12px 6px;
+    margin-right:22px;
+    cursor:pointer;
+    position:relative;
+    letter-spacing:0.01em;
+  }
+  nav.tabs button .num{
+    font-family:'Playfair Display', serif;
+    font-style:italic;
+    font-weight:400;
+    color:var(--linea);
+    margin-right:6px;
+  }
+  nav.tabs button.active{color:var(--tinta);}
+  nav.tabs button.active .num{color:var(--naranja);}
+  nav.tabs button.active::after{
+    content:"";
+    position:absolute;
+    left:0;right:0;bottom:-1px;
+    height:2px;
+    background:var(--naranja);
+  }
+  section.panel{display:none;}
+  section.panel.active{display:block;}
+
+  .card{
+    background:var(--blanco);
+    border:1px solid var(--linea);
+    border-radius:2px;
+    padding:26px;
+    margin-bottom:20px;
+  }
+  .card h2{
+    font-family:'Playfair Display', serif;
+    font-size:20px;
+    margin:0 0 4px;
+  }
+  .card .sub{
+    font-size:13px;
+    color:var(--tinta-suave);
+    margin:0 0 18px;
+    line-height:1.5;
+  }
+  .drop-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:880px){ .drop-grid{grid-template-columns:1fr 1fr;} }
+  @media (max-width:480px){ .drop-grid{grid-template-columns:1fr;} }
+
+  .dropzone{
+    border:1.5px dashed var(--linea);
+    border-radius:2px;
+    padding:18px 14px;
+    text-align:center;
+    cursor:pointer;
+    transition:border-color .15s, background .15s;
+    background:var(--crema);
+    position:relative;
+  }
+  .dropzone:hover{border-color:var(--verde);}
+  .dropzone.over{border-color:var(--verde); background:#eefaf9;}
+  .dropzone.filled{border-style:solid; border-color:var(--verde); background:#eefaf9;}
+  .dropzone .tag{
+    font-size:10.5px;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    color:var(--tinta-suave);
+    font-weight:700;
+    display:block;
+    margin-bottom:6px;
+  }
+  .dropzone .req{ color:var(--naranja); }
+  .dropzone .fname{
+    font-size:12.5px;
+    color:var(--tinta);
+    word-break:break-word;
+    margin-top:4px;
+  }
+  .dropzone input{display:none;}
+  .dropzone .icon{font-size:20px; display:block; margin-bottom:4px;}
+
+  button.primary{
+    appearance:none;
+    border:none;
+    background:var(--tinta);
+    color:var(--blanco);
+    font-family:'DM Sans', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    padding:13px 26px;
+    border-radius:2px;
+    cursor:pointer;
+    margin-top:18px;
+    transition:background .15s;
+  }
+  button.primary:hover{background:var(--morado);}
+  button.primary:disabled{background:var(--linea); color:var(--tinta-suave); cursor:not-allowed;}
+
+  button.secondary{
+    appearance:none;
+    border:1px solid var(--tinta);
+    background:none;
+    color:var(--tinta);
+    font-family:'DM Sans', sans-serif;
+    font-weight:700;
+    font-size:12.5px;
+    padding:9px 16px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  button.secondary:hover{background:var(--tinta); color:var(--blanco);}
+
+  textarea, input[type=text]{
+    width:100%;
+    font-family:'DM Sans', sans-serif;
+    font-size:14px;
+    padding:12px;
+    border:1px solid var(--linea);
+    border-radius:2px;
+    background:var(--blanco);
+    color:var(--tinta);
+    resize:vertical;
+  }
+  textarea:focus, input[type=text]:focus{outline:2px solid var(--verde); outline-offset:1px;}
+  label.field-label{
+    display:block;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:var(--tinta-suave);
+    margin:16px 0 6px;
+  }
+  label.field-label:first-child{margin-top:0;}
+
+  .row2{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  @media (max-width:600px){.row2{grid-template-columns:1fr;}}
+
+  .loading{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13.5px;
+    color:var(--tinta-suave);
+    padding:18px 0 0;
+  }
+  .spinner{
+    width:16px; height:16px;
+    border:2px solid var(--linea);
+    border-top-color:var(--morado);
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .veredicto-ok, .veredicto-obs{
+    border-radius:2px;
+    padding:20px 22px;
+    margin-bottom:18px;
+  }
+  .veredicto-ok{background:var(--ok-bg); border:1px solid var(--ok-linea);}
+  .veredicto-obs{background:var(--alerta-bg); border:1px solid var(--alerta-linea);}
+  .veredicto-ok .vtitle{color:#00787a;}
+  .veredicto-obs .vtitle{color:#c22200;}
+  .vtitle{
+    font-family:'Playfair Display', serif;
+    font-size:19px;
+    font-weight:700;
+    margin:0 0 6px;
+  }
+  .vsub{font-size:13.5px; color:var(--tinta-suave); line-height:1.5;}
+
+  .alerta{
+    border-left:3px solid var(--naranja);
+    background:var(--blanco);
+    border-top:1px solid var(--linea);
+    border-right:1px solid var(--linea);
+    border-bottom:1px solid var(--linea);
+    padding:16px 18px;
+    margin-bottom:12px;
+    border-radius:0 2px 2px 0;
+  }
+  .alerta.duda{border-left-color:var(--duda-linea);}
+  .alerta .campo{
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:var(--naranja);
+    margin-bottom:6px;
+  }
+  .alerta.duda .campo{color:#a87c10;}
+  .alerta .problema{font-size:14.5px; margin-bottom:8px; line-height:1.5;}
+  .alerta .correccion{
+    font-size:13.5px;
+    background:var(--crema);
+    padding:10px 12px;
+    border-radius:2px;
+    line-height:1.5;
+  }
+  .alerta .correccion b{color:var(--morado);}
+  .alerta .badge{
+    display:inline-block;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    padding:2px 7px;
+    border-radius:10px;
+    background:var(--duda-bg);
+    color:#a87c10;
+    margin-left:8px;
+    vertical-align:middle;
+  }
+
+  .obs-item{
+    border:1px solid var(--linea);
+    border-radius:2px;
+    padding:14px 16px;
+    margin-bottom:10px;
+    background:var(--blanco);
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-start;
+  }
+  .obs-item .meta{font-size:11px; color:var(--tinta-suave); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; font-weight:700;}
+  .obs-item .txt{font-size:13.5px; line-height:1.5;}
+  .obs-item .del{
+    background:none; border:none; color:var(--tinta-suave);
+    cursor:pointer; font-size:16px; padding:2px 6px; flex-shrink:0;
+  }
+  .obs-item .del:hover{color:var(--naranja);}
+  .empty{
+    font-size:13.5px;
+    color:var(--tinta-suave);
+    font-style:italic;
+    padding:10px 0;
+  }
+  .count-pill{
+    display:inline-block;
+    background:var(--morado);
+    color:var(--blanco);
+    font-size:11px;
+    font-weight:700;
+    padding:2px 9px;
+    border-radius:10px;
+    margin-left:8px;
+    vertical-align:middle;
+  }
+  .error-box{
+    background:#fdecec; border:1px solid var(--naranja);
+    padding:14px 16px; border-radius:2px; font-size:13.5px; margin-top:14px;
+  }
+  #alcanceOutput{
+    white-space:pre-wrap;
+    font-family:'DM Sans', sans-serif;
+    font-size:14px;
+    line-height:1.6;
+    background:var(--crema);
+    border:1px solid var(--linea);
+    padding:20px;
+    border-radius:2px;
+    margin-top:16px;
+    min-height:120px;
+  }
+  .toolbar{display:flex; gap:10px; margin-top:12px;}
+  footer.note{
+    font-size:12px; color:var(--tinta-suave); margin-top:36px; line-height:1.6;
+    border-top:1px solid var(--linea); padding-top:16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="brand">Ulpik · Legaltech</div>
+      <h1>Auditor de Trámites SENADI</h1>
+      <p class="lede">Revisa formularios de registro marcario antes de subirlos, para llegar a cero observaciones de forma.</p>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="auditar"><span class="num">01</span>Auditar trámite</button>
+    <button class="tab-btn" data-tab="observaciones"><span class="num">02</span>Base de observaciones</button>
+    <button class="tab-btn" data-tab="alcance"><span class="num">03</span>Generar alcance</button>
+  </nav>
+
+  <!-- TAB 1: AUDITAR -->
+  <section class="panel active" id="panel-auditar">
+    <div class="card">
+      <h2>Sube los documentos del trámite</h2>
+      <p class="sub">El formulario es obligatorio. El certificado de descuento y el logotipo son opcionales, pero mientras más subas, más completa la auditoría.</p>
+
+      <div class="drop-grid">
+        <div class="dropzone" id="dz-formulario" role="button" tabindex="0">
+          <span class="icon">📄</span>
+          <span class="tag">Formulario <span class="req">· obligatorio</span></span>
+          <span class="fname" id="fn-formulario">PDF de solicitud</span>
+          <input type="file" accept=".pdf,application/pdf" id="in-formulario">
+        </div>
+        <div class="dropzone" id="dz-descuento" role="button" tabindex="0">
+          <span class="icon">🧾</span>
+          <span class="tag">Certificado de descuento</span>
+          <span class="fname" id="fn-descuento">PDF (opcional)</span>
+          <input type="file" accept=".pdf,application/pdf" id="in-descuento">
+        </div>
+        <div class="dropzone" id="dz-logo" role="button" tabindex="0">
+          <span class="icon">🎨</span>
+          <span class="tag">Logotipo</span>
+          <span class="fname" id="fn-logo">Imagen (opcional)</span>
+          <input type="file" accept="image/*" id="in-logo">
+        </div>
+        <div class="dropzone" id="dz-nombramiento" role="button" tabindex="0">
+          <span class="icon">🏛️</span>
+          <span class="tag">Nombramiento representante</span>
+          <span class="fname" id="fn-nombramiento">PDF (opcional)</span>
+          <input type="file" accept=".pdf,application/pdf" id="in-nombramiento">
+        </div>
+      </div>
+
+      <button class="primary" id="btn-auditar" disabled>Auditar trámite</button>
+      <div class="loading" id="loading-auditar" style="display:none;">
+        <div class="spinner"></div><span id="loading-auditar-txt">Leyendo documentos…</span>
+      </div>
+      <div id="error-auditar"></div>
+    </div>
+
+    <div id="resultado-auditoria"></div>
+  </section>
+
+  <!-- TAB 2: OBSERVACIONES -->
+  <section class="panel" id="panel-observaciones">
+    <div class="card">
+      <h2>Registrar una observación real</h2>
+      <p class="sub">Pega el texto de la notificación de observación del SENADI (o sube el PDF). El sistema extrae el patrón y lo guarda para que futuras auditorías lo detecten antes de subir el trámite.</p>
+
+      <div class="dropzone" id="dz-obs-pdf" role="button" tabindex="0" style="max-width:280px;">
+        <span class="icon">📥</span>
+        <span class="tag">Subir PDF de la observación</span>
+        <span class="fname" id="fn-obs-pdf">opcional — o pega el texto abajo</span>
+        <input type="file" accept=".pdf,application/pdf" id="in-obs-pdf">
+      </div>
+
+      <label class="field-label">Texto de la notificación</label>
+      <textarea id="obs-texto" rows="7" placeholder="Pega aquí el texto completo de la observación del SENADI…"></textarea>
+
+      <button class="primary" id="btn-registrar-obs">Registrar en la base</button>
+      <div class="loading" id="loading-obs" style="display:none;">
+        <div class="spinner"></div><span>Extrayendo el patrón…</span>
+      </div>
+      <div id="error-obs"></div>
+    </div>
+
+    <div class="card">
+      <h2>Observaciones registradas <span class="count-pill" id="obs-count">0</span></h2>
+      <p class="sub">Esta base se usa como contexto adicional en cada auditoría de la pestaña 1.</p>
+      <div id="lista-observaciones"><p class="empty">Aún no registras observaciones.</p></div>
+    </div>
+  </section>
+
+  <!-- TAB 3: ALCANCE -->
+  <section class="panel" id="panel-alcance">
+    <div class="card">
+      <h2>Generar solicitud de alcance</h2>
+      <p class="sub">Pega la observación recibida del SENADI. El borrador sigue el formato y tono de tus solicitudes de alcance ya presentadas.</p>
+
+      <div class="row2">
+        <div>
+          <label class="field-label">No. de trámite</label>
+          <input type="text" id="alcance-tramite" placeholder="SENADI-2026-XXXXX">
+        </div>
+        <div>
+          <label class="field-label">Denominación</label>
+          <input type="text" id="alcance-denom" placeholder="NOMBRE MÁS LOGOTIPO">
+        </div>
+      </div>
+
+      <label class="field-label">Texto de la observación recibida</label>
+      <textarea id="alcance-obs" rows="7" placeholder="Pega aquí el texto de la notificación del SENADI…"></textarea>
+
+      <button class="primary" id="btn-generar-alcance">Generar borrador</button>
+      <div class="loading" id="loading-alcance" style="display:none;">
+        <div class="spinner"></div><span>Redactando el alcance…</span>
+      </div>
+      <div id="error-alcance"></div>
+
+      <div id="alcanceOutput" style="display:none;"></div>
+      <div class="toolbar" id="alcance-toolbar" style="display:none;">
+        <button class="secondary" id="btn-copiar-alcance">Copiar texto</button>
+        <button class="secondary" id="btn-descargar-alcance">Descargar .txt</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">
+    Herramienta interna de apoyo. Las alertas marcadas como <b>verificar manualmente</b> no tienen suficiente certeza para ser tratadas como error confirmado — revísalas tú antes de decidir. La auditoría no reemplaza el criterio del abogado patrocinador.
+  </footer>
+</div>
+
+<script>
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+}
+
+// ---------- Encabezados oficiales de la Clasificación de Niza, 13ª ed., versión 2026a ----------
+const REGLAS_NIZA = `
+Cl.1: Productos químicos para la industria, la ciencia y la fotografía, así como para la agricultura, la horticultura y la silvicultura; resinas artificiales en bruto, materias plásticas en bruto; compuestos para la extinción y prevención de incendios; preparaciones para templar y soldar metales; sustancias para curtir cueros y pieles; adhesivos para la industria; compost, abonos, fertilizantes; preparaciones biológicas para la industria y la ciencia.
+Cl.2: Pinturas, barnices, lacas; productos contra la herrumbre y el deterioro de la madera; colorantes, tintes; tintas de imprenta, de marcado y de grabado; resinas naturales en bruto; metales en hojas y en polvo para pintura, decoración, imprenta y trabajos artísticos.
+Cl.3: Productos cosméticos y preparaciones de tocador no medicinales; dentífricos no medicinales; perfumes; preparaciones para blanquear y otras sustancias para lavar la ropa; preparaciones para limpiar, pulir y raspar.
+Cl.4: Aceites y grasas para uso industrial, ceras; lubricantes; compuestos para absorber, rociar y asentar el polvo; combustibles y materiales de alumbrado; velas y mechas de iluminación.
+Cl.5: Productos farmacéuticos, preparaciones para uso médico y veterinario; preparaciones higiénicas para uso médico; alimentos y sustancias dietéticas para uso médico o veterinario, alimentos para bebés; suplementos alimenticios; esparadrapos, material para apósitos; materiales para empastes dentales, cera dental; desinfectantes; preparaciones para eliminar animales dañinos; fungicidas, herbicidas.
+Cl.6: Metales comunes y sus aleaciones, menas; materiales de construcción metálicos; construcciones transportables metálicas; cables e hilos metálicos no eléctricos; pequeños artículos de ferretería metálicos; contenedores metálicos de almacenamiento y transporte; cajas de caudales.
+Cl.7: Máquinas, máquinas herramientas y herramientas mecánicas; motores, excepto para vehículos terrestres; acoplamientos y elementos de transmisión, excepto para vehículos terrestres; instrumentos agrícolas que no sean de mano; incubadoras de huevos; distribuidores automáticos.
+Cl.8: Herramientas e instrumentos de mano accionados manualmente; artículos de cuchillería, tenedores y cucharas; armas blancas; maquinillas de afeitar.
+Cl.9: Aparatos e instrumentos científicos, de investigación, de navegación, geodésicos, fotográficos, cinematográficos, audiovisuales, ópticos, de pesaje, medición, señalización, detección, pruebas, inspección, salvamento y enseñanza; aparatos de conducción/distribución/transformación/acumulación/regulación o control de electricidad; aparatos de grabación, transmisión o reproducción de sonido, imágenes o datos; software, soportes de almacenamiento vírgenes; mecanismos para aparatos de monedas; cajas registradoras; ordenadores y periféricos; equipos de buceo; extintores.
+Cl.10: Aparatos e instrumentos quirúrgicos, médicos, odontológicos y veterinarios; miembros, ojos y dientes artificiales; gafas, lentes de contacto y gafas de sol; artículos ortopédicos; material de sutura; dispositivos terapéuticos y de asistencia para personas con discapacidad; aparatos de masaje; artículos de puericultura; artículos para actividades sexuales.
+Cl.11: Aparatos e instalaciones de alumbrado, calefacción, enfriamiento, producción de vapor, cocción, secado, ventilación y distribución de agua, así como instalaciones sanitarias.
+Cl.12: Vehículos; aparatos de locomoción terrestre, aérea o acuática.
+Cl.13: Armas de fuego; municiones y proyectiles; explosivos; fuegos artificiales.
+Cl.14: Metales preciosos y sus aleaciones; artículos de joyería, piedras preciosas y semipreciosas; artículos de relojería e instrumentos cronométricos.
+Cl.15: Instrumentos musicales; atriles para partituras y soportes para instrumentos musicales; batutas.
+Cl.16: Papel y cartón; productos de imprenta; material de encuadernación; fotografías; artículos de papelería y de oficina, excepto muebles; adhesivos de papelería o uso doméstico; material de dibujo y para artistas; pinceles; material didáctico; hojas, películas y bolsas plásticas para embalar; caracteres y clichés de imprenta.
+Cl.17: Caucho, gutapercha, goma, amianto y mica en bruto o semielaborados y sus sucedáneos; materias plásticas y resinas extrudidas para fabricación; materiales para calafatear, estopar y aislar; tuberías, tubos y mangueras flexibles no metálicos.
+Cl.18: Cuero y cuero de imitación; pieles de animales; artículos de equipaje y bolsas de transporte; paraguas y sombrillas; bastones; fustas, arneses y guarnicionería; collares, correas y ropa para animales.
+Cl.19: Materiales de construcción no metálicos; tuberías rígidas no metálicas para la construcción; asfalto, pez, alquitrán y betún; construcciones transportables no metálicas; monumentos no metálicos.
+Cl.20: Muebles, espejos, marcos; contenedores no metálicos de almacenamiento o transporte; hueso, cuerno, ballena o nácar en bruto o semielaborados; conchas; espuma de mar; ámbar amarillo.
+Cl.21: Utensilios y recipientes para uso doméstico y culinario; utensilios de cocina y vajilla, excepto tenedores, cuchillos y cucharas; peines y esponjas; cepillos; materiales para fabricar cepillos; material de limpieza; vidrio en bruto o semielaborado, excepto vidrio de construcción; cristalería, porcelana y loza.
+Cl.22: Cuerdas y cordeles; redes; tiendas de campaña y lonas; toldos textiles o sintéticos; velas de navegación; sacos de gran capacidad; materiales de acolchado y relleno, excepto papel, cartón, caucho o plástico; materias textiles fibrosas en bruto.
+Cl.23: Hilos e hilados para uso textil.
+Cl.24: Tejidos y sus sucedáneos; ropa de hogar; cortinas textiles o plásticas.
+Cl.25: Prendas de vestir, calzado, artículos de sombrerería.
+Cl.26: Encajes y bordados, cintas y lazos de mercería; botones, ganchos y ojetes, alfileres y agujas; flores artificiales; adornos para el cabello; cabello postizo.
+Cl.27: Alfombras, felpudos, esteras y esterillas, linóleo y otros revestimientos de suelos; tapices murales que no sean textiles.
+Cl.28: Juegos y juguetes; aparatos de videojuegos; artículos de gimnasia y deporte; adornos para árboles de Navidad.
+Cl.29: Carne, pescado, carne de ave y de caza; extractos de carne; frutas, verduras y algas en conserva, congeladas, secas y cocidas; jaleas, mermeladas, compotas; huevos; leche, quesos, mantequilla, yogur y otros lácteos; aceites y grasas para uso alimenticio.
+Cl.30: Café, té, cacao y sus sucedáneos; arroz, pastas y fideos; tapioca y sagú; harinas y preparaciones de cereales; pan, pastelería y confitería; chocolate; helados y sorbetes; azúcar, miel, melaza; levadura, polvos de hornear; sal, condimentos, especias, hierbas en conserva; vinagre, salsas; hielo.
+Cl.31: Productos agrícolas, acuícolas, hortícolas y forestales en bruto; granos y semillas en bruto; frutas y verduras frescas, hierbas aromáticas frescas; plantas y flores naturales; bulbos, plantones y semillas para plantar; animales vivos; alimentos y bebidas para animales; malta.
+Cl.32: Cervezas; bebidas sin alcohol; aguas minerales y carbonatadas; bebidas y zumos de frutas; siropes y preparaciones para elaborar bebidas sin alcohol.
+Cl.33: Bebidas alcohólicas, excepto cervezas; preparaciones alcohólicas para elaborar bebidas.
+Cl.34: Tabaco y sucedáneos; cigarrillos y puros; cigarrillos electrónicos y vaporizadores; artículos para fumadores; cerillas.
+Cl.35: Publicidad; gestión, organización y administración de negocios comerciales; trabajos de oficina.
+Cl.36: Servicios financieros, monetarios y bancarios; servicios de seguros; servicios inmobiliarios.
+Cl.37: Servicios de construcción; servicios de instalación y reparación; extracción minera, perforación de gas y de petróleo.
+Cl.38: Servicios de telecomunicaciones.
+Cl.39: Transporte; embalaje y almacenamiento de mercancías; organización de viajes.
+Cl.40: Tratamiento de materiales; reciclaje de residuos; purificación de aire y tratamiento de agua; servicios de impresión; conservación de alimentos y bebidas.
+Cl.41: Educación; formación; servicios de entretenimiento; actividades deportivas y culturales.
+Cl.42: Servicios científicos y tecnológicos, y de investigación y diseño conexos; análisis, investigación y diseño industrial; control de calidad y autenticación; diseño y desarrollo de hardware y software.
+Cl.43: Servicios de restauración (alimentación); hospedaje temporal.
+Cl.44: Servicios médicos; servicios veterinarios; tratamientos de higiene y belleza para personas o animales; servicios de agricultura, acuicultura, horticultura y silvicultura.
+Cl.45: Servicios jurídicos; servicios de seguridad para la protección física de bienes y personas; servicios de clubes de encuentro, redes sociales en línea; servicios funerarios; cuidado de niños a domicilio.
+Cl.90 (Lemas comerciales): sin clase internacional real — código administrativo del SENADI para lemas comerciales, sin detalle de productos/servicios.
+Cl.91 (Nombres comerciales): sin clase internacional real — código administrativo del SENADI para nombres comerciales; el detalle debe iniciar con "Actividades comerciales relacionadas con...".
+`;
+
+// ---------- Reglas base (instructivo RM-IN-002 + patrones reales) ----------
+const REGLAS_BASE = `
+REGLAS DE EXAMEN DE FORMA — REGISTRO DE SIGNOS DISTINTIVOS EN ECUADOR (SENADI), basadas en el Instructivo RM-IN-002 y en observaciones reales recibidas por Ulpik:
+
+1. DENOMINACIÓN: debe incluir todas las letras, números o signos del signo, sin comillas. Si es un signo MIXTO, debe incluir el término "MÁS LOGOTIPO" o "MÁS DISEÑO". Si es figurativo: "DISEÑO" o "DISEÑO DE (...)". Si es tridimensional: "DISEÑO TRIDIMENSIONAL".
+
+2. NATURALEZA Y TIPO DE SIGNO deben ser coherentes entre sí y con la imagen adjunta:
+   - Denominativo: solo letras/números/signos, sin gráficos ni colores especiales.
+   - Mixto: letras/números/signos + colores, tipografía especial o gráficos.
+   - Figurativo: solo gráficos, sin texto.
+   - Nombre comercial: identifica un establecimiento/actividad comercial, no un producto o servicio puntual.
+   - Lema comercial: solo contiene letras/números/signos (se clasifica como "denominativo" en tipo de signo) y SIEMPRE debe acompañar a una marca ya solicitada o registrada — nunca va solo.
+
+3. DESCRIPCIÓN CLARA Y COMPLETA DEL SIGNO (obligatoria en mixtos, figurativos, tridimensionales):
+   - Debe iniciar con la frase "Consiste en la denominación (...)" seguida de las letras/números exactos declarados en "Denominación".
+   - El estándar de suficiencia es el de describir el logo como si se le describiera a una persona no vidente que nunca podrá ver la imagen: la descripción debe ser tan exhaustiva que, leyéndola, cualquier persona pueda imaginar y reconstruir el logo con exactitud, sin haberlo visto. Esto exige detallar, como mínimo:
+     · cada elemento denominativo (palabra por palabra, mayúsculas/minúsculas, tipografía, estilo, inclinación, grosor de trazo);
+     · cada color exacto y a qué elemento corresponde cada color;
+     · cada figura o elemento gráfico, su forma geométrica precisa, proporciones y orientación;
+     · la disposición espacial de todos los elementos entre sí (qué va arriba, abajo, a la izquierda, a la derecha, superpuesto, dentro de qué figura);
+     · el fondo (color o si es transparente);
+     · cualquier reserva de variación de tamaño/color que se declare.
+   - Si al comparar la descripción contra la imagen adjunta falta mencionar cualquier elemento visible (un color, una figura, una proporción, una posición), o si la descripción es genérica/insuficiente para poder reconstruir el logo solo con el texto, esto debe marcarse como alerta, incluso si no existe aún un caso real de observación por ese motivo específico.
+   - Si el logotipo contiene un texto adicional al de la denominación principal (ej. un slogan o frase), la descripción debe aclarar expresamente si esa expresión es un LEMA COMERCIAL (en cuyo caso debe excluirse del diseño/descripción de esta solicitud porque se registra aparte) o si es de CARÁCTER MERAMENTE INFORMATIVO (en cuyo caso debe indicarse expresamente eso en la descripción). No dejar ese texto adicional sin mencionar ni sin calificar — este es un error recurrente que genera observación (caso real: ECOPRAL).
+   - La descripción debe guardar coherencia total con lo que efectivamente se ve en la imagen adjunta.
+
+4. IMAGEN: obligatoria en mixtos, figurativos, tridimensionales y apariencia distintiva. Debe guardar relación exacta con la denominación y la descripción.
+
+5. IDENTIFICACIÓN DEL SOLICITANTE:
+   - Persona natural: cédula o pasaporte/DNI.
+   - Persona jurídica: RUC.
+   - Estos datos no se pueden corregir después en el sistema del SENADI, por lo que deben quedar exactos desde el inicio.
+
+6. QUIÉN ACTÚA A TRAVÉS DE (apoderado/representante):
+   - Obligatorio si el solicitante es persona jurídica (representante legal) o si es una persona EXTRANJERA que actúa mediante apoderado en Ecuador.
+   - Si el solicitante es una persona extranjera representada por un apoderado, se debe adjuntar el PODER debidamente APOSTILLADO (o legalizado) e ingresado con su código en el libro de poderes del SENADI. La ausencia de este poder apostillado es causal real de observación (caso real: LUNSOLL).
+
+7. CLASE NIZA:
+   - Solo se puede elegir UNA clase internacional por solicitud.
+   - Marca de productos: clases 1 a 34.
+   - Marca de servicios: clases 35 a 45.
+   - Nombre comercial: código 91 (sin clase internacional real), y el detalle debe iniciar con la frase "Actividades comerciales relacionadas con...".
+   - Lema comercial: código 90, sin detalle de productos o servicios.
+   - El "Detalle clase niza" solo debe contener productos/servicios que correspondan a la clase internacional seleccionada; productos fuera de esa clase generan observación de exclusión.
+
+8. ANEXOS:
+   - Nombramiento de representante legal inscrito en el Registro Mercantil, obligatorio si el solicitante es persona jurídica.
+   - Poder de representación (apostillado si es del exterior) si el solicitante es extranjero o actúa mediante apoderado.
+
+9. CERTIFICADO DE DESCUENTO:
+   - El nombre del beneficiario que consta en el certificado de descuento debe coincidir EXACTAMENTE con el nombre/razón social del solicitante declarado en el formulario. Si la empresa cambió de denominación societaria y el certificado quedó con el nombre anterior, el certificado no es válido para ese trámite y se debe completar el pago de la diferencia de la tasa (caso real: VIDASUA — certificado a nombre de la razón social anterior).
+   - Beneficiarios válidos: MIPYMES, investigadores independientes, instituciones de educación superior, entidades del sector público, pequeño/mediano agricultor y organizaciones campesinas de producción agropecuaria, empresas de economía popular y solidaria, artesanos.
+   - El descuento cubre el 50% de la tasa total de $208,00 (queda en $104,00).
+
+10. DECLARACIÓN: el formulario debe incluir la declaración de veracidad de la información y firma correspondiente antes de ser presentado.
+
+11. PRIORIDAD: solo aplica si la marca fue registrada previamente en otro país, y requiere el documento de respaldo adjunto.
+
+12. NOMBRAMIENTO DE REPRESENTANTE LEGAL / GERENTE GENERAL (si el solicitante es persona jurídica):
+   - Primero identifica el tipo societario del solicitante a partir de su razón social o del propio nombramiento (ej. "S.A.", "SOCIEDAD ANÓNIMA", "CIA. LTDA.", "COMPAÑÍA LIMITADA", "S.A.S." / "SOCIEDAD POR ACCIONES SIMPLIFICADA").
+   - Si es Sociedad Anónima (S.A.) o Compañía Limitada (CIA. LTDA.): el nombramiento del representante legal/gerente general debe estar debidamente inscrito en el REGISTRO MERCANTIL del cantón correspondiente. Verifica que el documento adjunto haga referencia a esa inscripción (razón de inscripción, número, fecha, registrador mercantil).
+   - Si es Sociedad por Acciones Simplificada (S.A.S.): el nombramiento NO se inscribe en el Registro Mercantil; se registra directamente ante la SUPERINTENDENCIA DE COMPAÑÍAS, VALORES Y SEGUROS. Verifica que el documento adjunto corresponda a ese registro y no a una inscripción mercantil.
+   - Si el tipo societario que se infiere de la razón social/RUC no es coherente con la entidad ante la cual se registró el nombramiento adjunto (ej. una S.A.S. presentando un nombramiento inscrito en el Registro Mercantil, o viceversa), o si el nombramiento está caducado o el nombre del representante no coincide con el declarado en el campo "Quién actúa a través de", marca la alerta correspondiente.
+   - Si el solicitante es persona natural, este campo no aplica.
+
+13. CLASIFICACIÓN INTERNACIONAL DE NIZA — VERIFICACIÓN DE COHERENCIA DE CLASE:
+   Usa la siguiente lista oficial de encabezados de clase (13ª edición, versión 2026a) para verificar que el "Detalle clase niza" del formulario efectivamente corresponda a la clase internacional seleccionada, y para detectar productos/servicios que en realidad pertenecen a otra clase (lo cual genera observación de exclusión):
+${REGLAS_NIZA}
+`;
+
+
+// ---------- Storage local (reemplaza window.storage de Claude Artifacts) ----------
+window.storage = {
+  async list(prefix){
+    const keys = [];
+    for(let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if(k && k.startsWith(prefix||'')) keys.push(k);
+    }
+    return { keys };
+  },
+  async get(key){
+    const value = localStorage.getItem(key);
+    if(value === null) return null;
+    return { value };
+  },
+  async set(key, value){
+    localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+    return true;
+  },
+  async delete(key){
+    localStorage.removeItem(key);
+    return true;
+  }
+};
+
+// ---------- Utilidades de storage ----------
+async function cargarObservaciones(){
+  try{
+    const r = await window.storage.list('obs:', false);
+    if(!r || !r.keys) return [];
+    const items = [];
+    for(const k of r.keys){
+      try{
+        const v = await window.storage.get(k, false);
+        if(v && v.value) items.push({key:k, data: JSON.parse(v.value)});
+      }catch(e){}
+    }
+    items.sort((a,b)=> (b.data.fecha||'').localeCompare(a.data.fecha||''));
+    return items;
+  }catch(e){ return []; }
+}
+
+function contextoObservaciones(items){
+  if(!items.length) return "No hay observaciones previas registradas todavía.";
+  return items.map((it,i)=>{
+    const d = it.data;
+    return `(${i+1}) Campo: ${d.campo || 'N/D'} | Patrón: ${d.patron || d.resumen || ''} | Regla aprendida: ${d.regla || ''}`;
+  }).join('\n');
+}
+
+// ---------- Extracción de PDF ----------
+async function extraerTextoPDF(file){
+  if (typeof pdfjsLib === 'undefined') {
+    throw new Error('No se pudo cargar el lector de PDF. Recarga la página e intenta de nuevo.');
+  }
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+  let texto = '';
+  for(let i=1;i<=pdf.numPages;i++){
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    texto += content.items.map(it=>it.str).join(' ') + '\n';
+  }
+  return texto.trim();
+}
+
+function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=> res(r.result.split(',')[1]);
+    r.onerror = ()=> rej(new Error('No se pudo leer el archivo'));
+    r.readAsDataURL(file);
+  });
+}
+
+// ---------- Llamada a la API ----------
+async function llamarClaude(systemPrompt, contentBlocks){
+  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({
+      model:"claude-sonnet-4-6",
+      max_tokens:4000,
+      system: systemPrompt,
+      messages:[{role:"user", content: contentBlocks}]
+    })
+  });
+  if(!resp.ok){
+    const t = await resp.text();
+    throw new Error("Error de la API: " + resp.status + " " + t.slice(0,200));
+  }
+  const data = await resp.json();
+  const textBlocks = (data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
+  return textBlocks;
+}
+
+function extraerJSON(texto){
+  let t = texto.trim().replace(/^```json/i,'').replace(/^```/,'').replace(/```$/,'').trim();
+  const start = t.indexOf('{');
+  const end = t.lastIndexOf('}');
+  if(start>=0 && end>start) t = t.slice(start, end+1);
+  return JSON.parse(t);
+}
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'observaciones') renderObservaciones();
+  });
+});
+
+// ---------- Tab 1: Auditar ----------
+let files = { formulario:null, descuento:null, logo:null, nombramiento:null };
+
+function setPickedFile(key, file, dz, fnId){
+  if(!file) return;
+  files[key] = file;
+  document.getElementById(fnId).textContent = file.name;
+  dz.classList.add('filled');
+  checkReady();
+}
+
+function bindDropzone(id, inputId, fnId, key){
+  const dz = document.getElementById(id);
+  const input = document.getElementById(inputId);
+  if(!dz || !input) return;
+
+  // Evitar doble diálogo: NO usar <label> + input.click()
+  dz.addEventListener('click', (e)=>{
+    if(e.target === input) return;
+    e.preventDefault();
+    input.click();
+  });
+  dz.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' '){
+      e.preventDefault();
+      input.click();
+    }
+  });
+  input.addEventListener('click', (e)=> e.stopPropagation());
+  input.addEventListener('change', ()=>{
+    if(input.files && input.files[0]) setPickedFile(key, input.files[0], dz, fnId);
+  });
+
+  ['dragenter','dragover'].forEach(ev=>{
+    dz.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); dz.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(ev=>{
+    dz.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('over'); });
+  });
+  dz.addEventListener('drop', (e)=>{
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(!f) return;
+    try{
+      const dt = new DataTransfer();
+      dt.items.add(f);
+      input.files = dt.files;
+    }catch(_){ /* algunos navegadores no permiten setear input.files */ }
+    setPickedFile(key, f, dz, fnId);
+  });
+}
+bindDropzone('dz-formulario','in-formulario','fn-formulario','formulario');
+bindDropzone('dz-descuento','in-descuento','fn-descuento','descuento');
+bindDropzone('dz-logo','in-logo','fn-logo','logo');
+bindDropzone('dz-nombramiento','in-nombramiento','fn-nombramiento','nombramiento');
+
+function checkReady(){
+  document.getElementById('btn-auditar').disabled = !files.formulario;
+}
+
+document.getElementById('btn-auditar').addEventListener('click', async ()=>{
+  const btn = document.getElementById('btn-auditar');
+  const loading = document.getElementById('loading-auditar');
+  const loadingTxt = document.getElementById('loading-auditar-txt');
+  const errBox = document.getElementById('error-auditar');
+  const resultBox = document.getElementById('resultado-auditoria');
+  errBox.innerHTML = ''; resultBox.innerHTML = '';
+  btn.disabled = true; loading.style.display = 'flex';
+
+  try{
+    loadingTxt.textContent = 'Leyendo el formulario…';
+    const textoFormulario = await extraerTextoPDF(files.formulario);
+
+    let textoDescuento = '';
+    if(files.descuento){
+      loadingTxt.textContent = 'Leyendo el certificado de descuento…';
+      textoDescuento = await extraerTextoPDF(files.descuento);
+    }
+
+    let textoNombramiento = '';
+    if(files.nombramiento){
+      loadingTxt.textContent = 'Leyendo el nombramiento del representante legal…';
+      textoNombramiento = await extraerTextoPDF(files.nombramiento);
+    }
+
+    let logoBase64 = null, logoMedia = null;
+    if(files.logo){
+      loadingTxt.textContent = 'Procesando el logotipo…';
+      logoBase64 = await fileToBase64(files.logo);
+      logoMedia = files.logo.type || 'image/png';
+    }
+
+    loadingTxt.textContent = 'Cargando base de observaciones…';
+    const obs = await cargarObservaciones();
+    const ctxObs = contextoObservaciones(obs);
+
+    loadingTxt.textContent = 'Auditando el trámite…';
+
+    const systemPrompt = `Eres un experto en tramitología de propiedad intelectual en Ecuador, especializado en el examen de forma de solicitudes de registro de signos distintivos mixtos y denominativos ante el SENADI, bajo la Decisión 486 de la CAN y el Código Orgánico de la Economía Social de los Conocimientos (INGENIOS).
+
+${REGLAS_BASE}
+
+BASE DE OBSERVACIONES REALES REGISTRADAS POR EL EQUIPO (usa esto como contexto adicional prioritario, ya que refleja el criterio real de los examinadores del SENADI):
+${ctxObs}
+
+Tu tarea: auditar el formulario de solicitud (y certificado de descuento y logotipo si se adjuntan) para detectar cualquier elemento que probablemente genere una observación de forma en el SENADI, ANTES de que se suba el trámite.
+
+Reglas de tu respuesta:
+- Responde ÚNICAMENTE con un objeto JSON, sin texto adicional, sin backticks, con esta forma exacta:
+{"veredicto":"OK" o "CON_OBSERVACIONES", "resumen":"una frase breve", "alertas":[{"campo":"nombre del campo del formulario", "problema":"qué está mal o qué falta", "correccion":"cómo corregirlo exactamente, de forma accionable", "confianza":0-100, "fuente":"manual" o "observacion_previa" o "coherencia_imagen"}]}
+- Solo incluye una alerta si tienes una razón concreta y verificable en el texto o la imagen para sospechar un problema real.
+- Si tu certeza sobre un problema es menor al 95%, IGUAL inclúyelo pero con confianza reflejando ese nivel real (por ejemplo 60, 70, 80) — nunca redondees hacia arriba solo para simplificar.
+- Si no detectas ningún problema, "veredicto" debe ser "OK" y "alertas" debe ser un arreglo vacío.
+- No inventes datos que no estén en el texto ni en la imagen.`;
+
+    const contentBlocks = [
+      { type:"text", text: `TEXTO EXTRAÍDO DEL FORMULARIO DE SOLICITUD:\n${textoFormulario}` }
+    ];
+    if(textoDescuento){
+      contentBlocks.push({ type:"text", text: `TEXTO EXTRAÍDO DEL CERTIFICADO DE DESCUENTO:\n${textoDescuento}` });
+    } else {
+      contentBlocks.push({ type:"text", text: `No se adjuntó certificado de descuento para esta auditoría.` });
+    }
+    if(logoBase64){
+      contentBlocks.push({ type:"image", source:{ type:"base64", media_type: logoMedia, data: logoBase64 } });
+      contentBlocks.push({ type:"text", text:"La imagen anterior es el logotipo adjunto al trámite. Verifica que la 'Descripción clara y completa del signo' del formulario coincida exactamente con lo que se observa en esta imagen, con el nivel de detalle exhaustivo exigido en la regla 3 (como para una persona no vidente)." });
+    } else {
+      contentBlocks.push({ type:"text", text:"No se adjuntó el logotipo para esta auditoría, por lo que no se puede verificar coherencia visual ni el nivel de detalle de la descripción; indícalo si el signo es mixto/figurativo y depende de esa verificación." });
+    }
+
+    if(textoNombramiento){
+      contentBlocks.push({ type:"text", text: `TEXTO EXTRAÍDO DEL NOMBRAMIENTO DE REPRESENTANTE LEGAL / GERENTE GENERAL:\n${textoNombramiento}\n\nVerifica la regla 12: identifica el tipo societario del solicitante y confirma si este nombramiento fue registrado ante la entidad correcta (Registro Mercantil para S.A./Cía. Ltda., o Superintendencia de Compañías para S.A.S.), y si el nombre del representante coincide con el declarado en el formulario.` });
+    } else {
+      contentBlocks.push({ type:"text", text:"No se adjuntó el nombramiento de representante legal/gerente general. Si el solicitante es persona jurídica, indícalo como alerta de verificación manual, ya que no se puede confirmar la correcta acreditación ante el Registro Mercantil o la Superintendencia de Compañías según corresponda." });
+    }
+
+    const raw = await llamarClaude(systemPrompt, contentBlocks);
+    const json = extraerJSON(raw);
+    renderResultado(json);
+
+  }catch(e){
+    errBox.innerHTML = `<div class="error-box">No se pudo completar la auditoría: ${e.message}</div>`;
+  }finally{
+    btn.disabled = false; loading.style.display = 'none';
+  }
+});
+
+function renderResultado(json){
+  const box = document.getElementById('resultado-auditoria');
+  let html = '';
+  if(json.veredicto === 'OK'){
+    html += `<div class="veredicto-ok"><div class="vtitle">✓ OK para subir</div><div class="vsub">${json.resumen || 'No se detectaron elementos que generen observación de forma.'}</div></div>`;
+  } else {
+    html += `<div class="veredicto-obs"><div class="vtitle">⚠ Hay que corregir antes de subir</div><div class="vsub">${json.resumen || ''}</div></div>`;
+  }
+  (json.alertas||[]).forEach(a=>{
+    const duda = (a.confianza !== undefined && a.confianza < 95);
+    html += `<div class="alerta ${duda?'duda':''}">
+      <div class="campo">${a.campo || 'Campo'} ${duda?'<span class=\"badge\">Verificar manualmente</span>':''}</div>
+      <div class="problema">${a.problema || ''}</div>
+      <div class="correccion"><b>Corrección sugerida:</b> ${a.correccion || ''}</div>
+    </div>`;
+  });
+  box.innerHTML = html;
+}
+
+// ---------- Tab 2: Observaciones ----------
+(function bindObsPdf(){
+  const dz = document.getElementById('dz-obs-pdf');
+  const input = document.getElementById('in-obs-pdf');
+  if(!dz || !input) return;
+  dz.addEventListener('click', (e)=>{
+    if(e.target === input) return;
+    e.preventDefault();
+    input.click();
+  });
+  input.addEventListener('click', (e)=> e.stopPropagation());
+  input.addEventListener('change', async (e)=>{
+    const f = e.target.files[0];
+    if(!f) return;
+    document.getElementById('fn-obs-pdf').textContent = f.name;
+    dz.classList.add('filled');
+    try{
+      const texto = await extraerTextoPDF(f);
+      document.getElementById('obs-texto').value = texto;
+    }catch(err){
+      document.getElementById('error-obs').innerHTML = `<div class="error-box">No se pudo leer el PDF: ${err.message}</div>`;
+    }
+  });
+  ['dragenter','dragover'].forEach(ev=>{
+    dz.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); dz.classList.add('over'); });
+  });
+  ['dragleave','drop'].forEach(ev=>{
+    dz.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('over'); });
+  });
+  dz.addEventListener('drop', async (e)=>{
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(!f) return;
+    document.getElementById('fn-obs-pdf').textContent = f.name;
+    dz.classList.add('filled');
+    try{
+      const texto = await extraerTextoPDF(f);
+      document.getElementById('obs-texto').value = texto;
+    }catch(err){
+      document.getElementById('error-obs').innerHTML = `<div class="error-box">No se pudo leer el PDF: ${err.message}</div>`;
+    }
+  });
+})();
+
+document.getElementById('btn-registrar-obs').addEventListener('click', async ()=>{
+  const texto = document.getElementById('obs-texto').value.trim();
+  const errBox = document.getElementById('error-obs');
+  const loading = document.getElementById('loading-obs');
+  errBox.innerHTML = '';
+  if(!texto){
+    errBox.innerHTML = `<div class="error-box">Pega el texto de la observación o sube el PDF primero.</div>`;
+    return;
+  }
+  loading.style.display = 'flex';
+  try{
+    const systemPrompt = `Eres un experto en tramitología de propiedad intelectual ante el SENADI en Ecuador. Vas a leer una notificación de observación real emitida por el SENADI y extraer el patrón de error de forma reutilizable, para alimentar una base de conocimiento que evite que ese mismo error se repita en trámites futuros.
+
+Responde ÚNICAMENTE con un objeto JSON, sin texto adicional, sin backticks, con esta forma:
+{"campo":"el campo del formulario afectado (ej: Descripción del signo, Certificado de descuento, Quién actúa a través de, Denominación, Clase Niza, etc.)", "patron":"descripción breve y genérica del tipo de error detectado, útil para reconocerlo en otros trámites", "regla":"la regla concreta y accionable que se debe aplicar de ahora en adelante para evitar este error", "resumen":"resumen de una frase del caso concreto"}`;
+    const raw = await llamarClaude(systemPrompt, [{type:"text", text: texto}]);
+    const json = extraerJSON(raw);
+    json.fecha = new Date().toISOString();
+    json.textoOriginal = texto.slice(0,800);
+    const id = 'obs:' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+    const r = await window.storage.set(id, JSON.stringify(json), false);
+    if(!r) throw new Error('No se pudo guardar la observación.');
+    document.getElementById('obs-texto').value = '';
+    document.getElementById('fn-obs-pdf').textContent = 'opcional — o pega el texto abajo';
+    document.getElementById('dz-obs-pdf').classList.remove('filled');
+    document.getElementById('in-obs-pdf').value = '';
+    await renderObservaciones();
+  }catch(e){
+    errBox.innerHTML = `<div class="error-box">No se pudo registrar la observación: ${e.message}</div>`;
+  }finally{
+    loading.style.display = 'none';
+  }
+});
+
+async function renderObservaciones(){
+  const listBox = document.getElementById('lista-observaciones');
+  const countPill = document.getElementById('obs-count');
+  const items = await cargarObservaciones();
+  countPill.textContent = items.length;
+  if(!items.length){
+    listBox.innerHTML = '<p class="empty">Aún no registras observaciones.</p>';
+    return;
+  }
+  listBox.innerHTML = items.map(it=>{
+    const d = it.data;
+    const fecha = d.fecha ? new Date(d.fecha).toLocaleDateString('es-EC', {day:'2-digit', month:'short', year:'numeric'}) : '';
+    return `<div class="obs-item">
+      <div>
+        <div class="meta">${d.campo || 'Campo'} · ${fecha}</div>
+        <div class="txt"><b>${d.patron || ''}</b><br>${d.regla || ''}</div>
+      </div>
+      <button class="del" data-key="${it.key}" title="Eliminar">✕</button>
+    </div>`;
+  }).join('');
+
+  listBox.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      try{
+        await window.storage.delete(btn.dataset.key, false);
+        await renderObservaciones();
+      }catch(e){}
+    });
+  });
+}
+
+// ---------- Tab 3: Generar alcance ----------
+document.getElementById('btn-generar-alcance').addEventListener('click', async ()=>{
+  const tramite = document.getElementById('alcance-tramite').value.trim();
+  const denom = document.getElementById('alcance-denom').value.trim();
+  const obsTexto = document.getElementById('alcance-obs').value.trim();
+  const errBox = document.getElementById('error-alcance');
+  const loading = document.getElementById('loading-alcance');
+  const output = document.getElementById('alcanceOutput');
+  const toolbar = document.getElementById('alcance-toolbar');
+  errBox.innerHTML = ''; output.style.display='none'; toolbar.style.display='none';
+
+  if(!obsTexto){
+    errBox.innerHTML = `<div class="error-box">Pega el texto de la observación recibida.</div>`;
+    return;
+  }
+  loading.style.display = 'flex';
+  try{
+    const systemPrompt = `Eres una abogada patrocinadora ecuatoriana especializada en propiedad intelectual, redactando una "Solicitud de Alcance" en respuesta a una notificación de observación del SENADI, para que se cargue como escrito de contestación en el expediente digital.
+
+Sigue exactamente este formato y tono, tomado de un modelo real ya presentado y aceptado:
+
+---
+SERVICIO NACIONAL DE DERECHOS INTELECTUALES SENADI -
+DIRECCIÓN NACIONAL DE PROPIEDAD INDUSTRIAL
+
+Trámite No. [NÚMERO DE TRÁMITE]
+Denominación: [DENOMINACIÓN]
+
+ALCANCE A LA SOLICITUD DE REGISTRO
+
+Mediante el presente documento, se realiza un alcance a la solicitud de registro en el cual:
+- [Punto o puntos concretos que resuelven exactamente lo solicitado en la observación, redactados de forma clara, formal y accionable, uno por cada requerimiento de la notificación]
+
+Por lo antedicho, solicitamos [petición concreta acorde a lo corregido: continuar con el trámite, proceder con la publicación en la siguiente gaceta del SENADI, etc.]
+
+Atentamente, legalmente autorizada
+Ab. Sofía Becerra
+---
+
+Instrucciones:
+- Usa el número de trámite y la denominación que te proporcione el usuario; si no los da, deja un marcador de texto entre corchetes indicando qué falta completar.
+- Lee la notificación de observación y redacta cada punto de "Alcance" respondiendo PUNTUALMENTE a lo que el SENADI pidió (adjuntar documento, aclarar algo, corregir un dato, hacer un pago, retirar un elemento, etc.), en primera persona plural ("se realiza...", "solicitamos...").
+- No inventes hechos que no estén en la observación ni en los datos proporcionados; si falta un dato imprescindible para completar el escrito (ej. el nombre exacto del documento que se va a adjuntar), indícalo entre corchetes como "[COMPLETAR: ...]" en vez de inventarlo.
+- Responde ÚNICAMENTE con el texto final del escrito, sin explicaciones adicionales, sin backticks ni markdown.`;
+
+    const userText = `Trámite No.: ${tramite || '[COMPLETAR: número de trámite]'}\nDenominación: ${denom || '[COMPLETAR: denominación]'}\n\nTexto de la observación recibida del SENADI:\n${obsTexto}`;
+
+    const raw = await llamarClaude(systemPrompt, [{type:"text", text:userText}]);
+    output.textContent = raw.trim();
+    output.style.display = 'block';
+    toolbar.style.display = 'flex';
+  }catch(e){
+    errBox.innerHTML = `<div class="error-box">No se pudo generar el borrador: ${e.message}</div>`;
+  }finally{
+    loading.style.display = 'none';
+  }
+});
+
+document.getElementById('btn-copiar-alcance').addEventListener('click', ()=>{
+  const txt = document.getElementById('alcanceOutput').textContent;
+  navigator.clipboard.writeText(txt);
+  const b = document.getElementById('btn-copiar-alcance');
+  const old = b.textContent;
+  b.textContent = '¡Copiado!';
+  setTimeout(()=> b.textContent = old, 1500);
+});
+
+document.getElementById('btn-descargar-alcance').addEventListener('click', ()=>{
+  const txt = document.getElementById('alcanceOutput').textContent;
+  const denom = document.getElementById('alcance-denom').value.trim() || 'alcance';
+  const blob = new Blob([txt], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Solicitud_Alcance_${denom.replace(/\s+/g,'_')}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ---------- Semilla inicial con observaciones reales ya conocidas ----------
+async function sembrarObservacionesIniciales(){
+  try{
+    const marca = await window.storage.get('meta:seed-done', false).catch(()=>null);
+    if(marca) return;
+  }catch(e){}
+  const semillas = [
+    {
+      campo: "Quién actúa a través de / Anexos",
+      patron: "Solicitante persona extranjera representada por apoderado, sin poder apostillado adjunto ni código en el libro de poderes.",
+      regla: "Si el solicitante es una persona extranjera (natural o jurídica) y actúa mediante apoderado en Ecuador, verificar SIEMPRE que se adjunte el poder debidamente apostillado y que su código conste ingresado en el libro de poderes del SENADI, antes de subir el trámite.",
+      resumen: "Caso real LUNSOLL MÁS LOGOTIPO (SENADI-2026-24618): observación por falta de poder apostillado de solicitante chileno.",
+      fecha: new Date().toISOString(),
+      textoOriginal: "Adjuntar el poder debidamente apostillado, así como el código del mismo que debe estar ingresado en el libro de poderes, en razón que el solicitante del signo distintivo es una persona extranjera y necesita un representante en Ecuador."
+    },
+    {
+      campo: "Certificado de descuento",
+      patron: "El nombre del beneficiario en el certificado de descuento no coincide con el nombre actual del solicitante (por cambio de denominación societaria posterior a la emisión del certificado).",
+      regla: "Verificar SIEMPRE que el nombre/razón social en el certificado de descuento coincida EXACTAMENTE, letra por letra, con el nombre del solicitante declarado en el formulario. Si la empresa cambió de denominación después de emitido el certificado, el certificado no es válido y se debe completar el 50% restante de la tasa antes de iniciar.",
+      resumen: "Caso real VIDASUA MÁS LOGOTIPO (SENADI-2026-53095): certificado emitido a nombre de la razón social anterior de la compañía.",
+      fecha: new Date().toISOString(),
+      textoOriginal: "El certificado de descuento no coincide con la identificación del solicitante del presente signo distintivo, en razón de un cambio de denominación societaria."
+    },
+    {
+      campo: "Descripción del signo",
+      patron: "El logotipo incluye una frase o texto adicional a la denominación principal, y la descripción del signo no aclara si es un lema comercial o si es de carácter meramente informativo.",
+      regla: "Si el logotipo contiene cualquier texto adicional a la denominación principal, revisar antes de subir si corresponde a un LEMA COMERCIAL (debe excluirse del diseño/descripción y tramitarse en solicitud aparte) o si es de carácter INFORMATIVO (debe indicarse expresamente esa calificación en el campo 'Descripción clara y completa del signo'). Nunca dejar ese texto sin calificar.",
+      resumen: "Caso real ECOPRAL MÁS LOGOTIPO (SENADI-2026-49617): frase adicional en el logo sin aclarar si era lema comercial o informativa.",
+      fecha: new Date().toISOString(),
+      textoOriginal: "Aclarar si la expresión que consta en el logotipo corresponde a un lema comercial o tiene carácter informativo."
+    }
+  ];
+  for(const s of semillas){
+    const id = 'obs:seed-' + Math.random().toString(36).slice(2,10);
+    await window.storage.set(id, JSON.stringify(s), false).catch(()=>{});
+  }
+  await window.storage.set('meta:seed-done', 'true', false).catch(()=>{});
+}
+
+// carga inicial
+(async ()=>{
+  await sembrarObservacionesIniciales();
+  await renderObservaciones();
+})();
+</script>
+</body>
+</html>

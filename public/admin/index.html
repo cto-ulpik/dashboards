@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <meta name="googlebot" content="noindex, nofollow" />
+  <title>Admin · Dashboards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/neo.min.css" />
+  <link rel="stylesheet" href="/css/shared.css?v=8" />
+  <link rel="stylesheet" href="/admin/admin.css?v=8" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-copy">
+            <p class="brand-title">Dashboards</p>
+            <p class="brand-sub">Panel de administración</p>
+          </div>
+        </div>
+        <nav class="nav-links" aria-label="Navegación">
+          <a class="nav-link is-active" href="/admin">Administración</a>
+          <a class="nav-link" href="/">Visualizador</a>
+          <a class="nav-link" href="/manual">Manual</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="page-header">
+        <div>
+          <h1>Gestionar dashboards</h1>
+          <p>Crea uno nuevo o edita uno existente desde la lista.</p>
+        </div>
+        <button type="button" class="btn btn-primary" id="btn-new">+ Nuevo</button>
+      </div>
+
+      <section id="editor-panel" class="panel panel-pad editor-panel" hidden>
+        <div class="editor-panel-header">
+          <h2 class="section-title" id="form-title">Nuevo dashboard</h2>
+          <button type="button" class="btn btn-ghost btn-sm" id="btn-cancel">Cancelar</button>
+        </div>
+
+        <form id="dashboard-form" class="form-grid" novalidate>
+          <input type="hidden" id="dashboard-id" value="" />
+
+          <div class="meta-grid">
+            <div class="field">
+              <label for="title">Título *</label>
+              <input id="title" name="title" type="text" required maxlength="120" placeholder="Ej. Ventas Q1" />
+            </div>
+
+            <div class="field">
+              <label for="subtitle">Subtítulo *</label>
+              <input id="subtitle" name="subtitle" type="text" required maxlength="200" placeholder="Ej. Resumen comercial por región" />
+            </div>
+
+            <div class="field">
+              <label for="tags">Etiquetas *</label>
+              <input id="tags" name="tags" type="text" required placeholder="ventas, finanzas, 2026" />
+              <p class="hint">Separa las etiquetas con comas.</p>
+            </div>
+
+            <div class="field">
+              <label for="category">Clasificación *</label>
+              <select id="category" name="category" required>
+                <option value="">Selecciona una clasificación</option>
+                <option value="comite-ulpik">Comité Ulpik</option>
+                <option value="comite-mqi">Comité MQI</option>
+                <option value="herramientas">Herramientas</option>
+              </select>
+            </div>
+
+            <div class="field field-check">
+              <label class="check-label" for="needs-ai">
+                <input id="needs-ai" name="needs_ai" type="checkbox" />
+                <span>Necesita IA</span>
+              </label>
+              <p class="hint">Actívalo si el HTML llama a un modelo (Anthropic/OpenAI). La clave se usa desde el servidor (.env) y no se expone en el navegador.</p>
+            </div>
+
+            <div class="field">
+              <label for="file">Importar archivo HTML</label>
+              <div class="file-drop" id="file-drop">
+                <input id="file" name="file" type="file" accept=".html,.htm,text/html" />
+                <strong>Arrastra un .html aquí</strong>
+                <span>o haz clic para seleccionarlo (máx. 5 MB)</span>
+                <div class="file-name" id="file-name" hidden></div>
+              </div>
+              <p class="hint" id="file-hint">También puedes escribir o pegar el HTML en el editor.</p>
+            </div>
+          </div>
+
+          <div class="editor-workspace">
+            <div class="editor-pane">
+              <div class="editor-toolbar">
+                <h3 class="section-title" style="margin: 0;">Editor HTML</h3>
+                <div class="actions">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-preview">Vista previa</button>
+                </div>
+              </div>
+              <textarea id="html-editor" aria-label="Editor HTML del dashboard"></textarea>
+            </div>
+
+            <div class="preview-pane">
+              <div class="editor-toolbar">
+                <h3 class="section-title" style="margin: 0;">Vista previa</h3>
+              </div>
+              <div id="preview-empty" class="preview-empty">
+                Escribe o importa HTML para ver la vista previa.
+              </div>
+              <iframe
+                id="preview-frame"
+                class="preview-frame"
+                title="Vista previa del dashboard"
+                sandbox="allow-scripts allow-forms allow-modals allow-popups allow-presentation"
+                hidden
+              ></iframe>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary" id="btn-save">Guardar</button>
+            <button type="button" class="btn btn-ghost" id="btn-cancel-bottom">Cancelar</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel panel-pad" id="list-panel">
+        <div class="page-header" style="margin-bottom: 1rem;">
+          <h2 class="section-title" style="margin: 0;">Dashboards subidos</h2>
+          <span class="meta-row" id="count-label">0 dashboards</span>
+        </div>
+        <div id="dashboard-list" class="list" aria-live="polite"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+    <div class="modal">
+      <h2 id="delete-title">Eliminar dashboard</h2>
+      <p id="delete-message">Esta acción no se puede deshacer.</p>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" id="btn-cancel-delete">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="btn-confirm-delete">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/closetag.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/matchbrackets.min.js"></script>
+  <script src="/admin/admin.js?v=8"></script>
+</body>
+</html>

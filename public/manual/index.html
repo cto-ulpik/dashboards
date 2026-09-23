@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Manual rápido · Dashboards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/shared.css" />
+  <style>
+    .manual {
+      max-width: 720px;
+    }
+    .step {
+      display: grid;
+      grid-template-columns: 3rem 1fr;
+      gap: 1rem;
+      padding: 1.15rem 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .step:last-child {
+      border-bottom: 0;
+    }
+    .step-num {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+    }
+    .step h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.15rem;
+    }
+    .step p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    .step code,
+    .tip code {
+      font-family: var(--mono);
+      font-size: 0.86em;
+      background: var(--accent-soft);
+      color: #115e59;
+      padding: 0.1rem 0.4rem;
+      border-radius: 0.35rem;
+    }
+    .tip {
+      margin-top: 1.25rem;
+      padding: 1rem 1.1rem;
+      border-radius: var(--radius-sm);
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-copy">
+            <p class="brand-title">Dashboards</p>
+            <p class="brand-sub">Manual rápido</p>
+          </div>
+        </div>
+        <nav class="nav-links">
+          <a class="nav-link" href="/admin">Administración</a>
+          <a class="nav-link" href="/">Visualizador</a>
+          <a class="nav-link is-active" href="/manual">Manual</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page manual">
+      <div class="page-header">
+        <div>
+          <h1>Cómo publicar tu HTML</h1>
+          <p>Guía corta: sube tu archivo, míralo y compártelo con otras personas.</p>
+        </div>
+      </div>
+
+      <section class="panel panel-pad">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <h2>Entra al panel de administración</h2>
+            <p>Abre <code>https://dashboard.ulpik.com/admin</code> en tu navegador.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <h2>Llena los datos</h2>
+            <p>Escribe un <strong>título</strong>, un <strong>subtítulo</strong> y unas <strong>etiquetas</strong> separadas por comas (ejemplo: <code>ventas, escuela, 2026</code>).</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <h2>Sube o pega tu HTML</h2>
+            <p>Arrastra tu archivo <code>.html</code> a la zona de importar, o escríbelo/pégalo en el editor. Mira la vista previa a la derecha.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">4</div>
+          <div>
+            <h2>Guarda</h2>
+            <p>Haz clic en <strong>Guardar</strong>. Tu dashboard quedará en la lista de abajo.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">5</div>
+          <div>
+            <h2>Míralo en el visualizador</h2>
+            <p>Ve a <code>https://dashboard.ulpik.com/</code>, busca tu título y haz clic en la tarjeta para abrirlo.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num">6</div>
+          <div>
+            <h2>Compártelo</h2>
+            <p>En la tarjeta o dentro del dashboard, haz clic en <strong>Compartir</strong>. Se copia el link. Pégalo en un chat o correo. Quien lo abra verá tu HTML directo.</p>
+          </div>
+        </div>
+
+        <div class="tip">
+          <strong>Tip:</strong> si no ves los cambios, recarga la página con Ctrl+F5 (en Mac: Cmd+Shift+R).
+        </div>
+      </section>
+
+      <div class="actions" style="margin-top: 1.25rem;">
+        <a class="btn btn-primary" href="/admin">Ir a /admin</a>
+        <a class="btn btn-secondary" href="/">Ir al visualizador</a>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

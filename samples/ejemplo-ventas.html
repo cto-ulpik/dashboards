@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Ejemplo Ventas</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #2dd4bf;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      background: radial-gradient(circle at top, #1e293b, var(--bg));
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    h1 { margin: 0 0 0.35rem; font-size: 1.8rem; }
+    p { margin: 0 0 1.5rem; color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .metric {
+      background: var(--card);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 1.1rem;
+    }
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 0.35rem;
+    }
+    .metric strong {
+      font-size: 1.6rem;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <h1>Ventas Q1</h1>
+  <p>Dashboard de ejemplo para validar la carga en iframe.</p>
+  <div class="grid">
+    <div class="metric"><span>Ingresos</span><strong>$1.2M</strong></div>
+    <div class="metric"><span>Pedidos</span><strong>4,812</strong></div>
+    <div class="metric"><span>Conversión</span><strong>3.8%</strong></div>
+    <div class="metric"><span>NPS</span><strong>72</strong></div>
+  </div>
+</body>
+</html>

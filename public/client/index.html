@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <meta name="googlebot" content="noindex, nofollow" />
+  <title>Visualizador · Dashboards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/shared.css?v=7" />
+  <link rel="stylesheet" href="/client/client.css?v=7" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-copy">
+            <p class="brand-title">Dashboards</p>
+            <p class="brand-sub">Visualizador</p>
+          </div>
+        </div>
+        <nav class="nav-links" aria-label="Navegación">
+          <a class="nav-link" href="/admin">Administración</a>
+          <a class="nav-link is-active" href="/">Visualizador</a>
+          <a class="nav-link" href="/manual">Manual</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <section id="categories-view">
+        <div class="page-header">
+          <div>
+            <h1>Elige una categoría</h1>
+            <p>Primero selecciona el área. Luego verás la lista de dashboards disponibles.</p>
+          </div>
+        </div>
+        <div id="category-grid" class="category-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="list-view" hidden>
+        <div class="page-header list-header">
+          <div>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-back-categories">← Categorías</button>
+            <h1 id="list-title">Categoría</h1>
+            <p id="list-subtitle">Dashboards de esta categoría</p>
+          </div>
+          <div class="list-count" id="list-count">0</div>
+        </div>
+
+        <div class="list-toolbar panel panel-pad">
+          <div class="field search-field">
+            <label for="search">Buscar en esta categoría</label>
+            <input
+              id="search"
+              class="search-input"
+              type="search"
+              placeholder="Filtrar por título o subtítulo..."
+              autocomplete="off"
+            />
+          </div>
+        </div>
+
+        <div class="panel list-panel">
+          <div class="list-head" aria-hidden="true">
+            <span>Dashboard</span>
+            <span>Acción</span>
+          </div>
+          <div id="dashboard-list" class="dashboard-list" aria-live="polite"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/client/client.js?v=7"></script>
+</body>
+</html>

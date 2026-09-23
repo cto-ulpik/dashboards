@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Radar Marcario Ecuador™ · ULPIK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc; --card:#fff; --ink:#0f172a; --muted:#64748b; --faint:#94a3b8; --line:#e2e8f0;
+  --blue:#2563eb; --blue-bg:#eff6ff; --blue-line:#bfdbfe;
+  --red:#b91c1c; --red-bg:#fef2f2; --red-line:#fecaca;
+  --amber:#b45309; --amber-bg:#fffbeb; --amber-line:#fde68a;
+  --green:#047857; --green-bg:#ecfdf5; --green-line:#a7f3d0;
+  --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0;font-weight:700;letter-spacing:-0.02em}
+p{margin:0}
+button,input{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.wrap{max-width:72rem;margin:0 auto;padding:1rem}
+.hero{margin-bottom:1rem}
+.hero h1{font-size:1.35rem}
+.hero p{font-size:.875rem;color:var(--muted);margin-top:.25rem}
+.notice{display:flex;gap:.5rem;align-items:flex-start;border:1px solid var(--blue-line);background:var(--blue-bg);border-radius:var(--r);padding:.75rem;font-size:.75rem;color:#1e40af;margin-bottom:1rem}
+.grid{display:grid;grid-template-columns:1fr;gap:1rem}
+@media(min-width:1024px){.grid{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:1rem}
+.card h2{font-size:.875rem;margin-bottom:.75rem}
+.field{display:block;margin-bottom:.75rem}
+.field span{display:block;font-size:.75rem;font-weight:500;color:var(--muted);margin-bottom:.25rem}
+.field .req{color:var(--red)}
+.field input{width:100%;border:1px solid #cbd5e1;border-radius:.5rem;padding:.5rem .75rem;font-size:.875rem;color:var(--ink);background:#fff}
+.field input:focus{border-color:var(--ink);outline:none;box-shadow:0 0 0 1px var(--ink)}
+.btn-main{display:flex;width:100%;align-items:center;justify-content:center;gap:.5rem;border:none;border-radius:.5rem;background:var(--ink);color:#fff;padding:.625rem 1rem;font-size:.875rem;font-weight:500;margin-top:.25rem}
+.btn-main:hover{background:#1e293b}
+.btn-main:disabled{opacity:.6;cursor:not-allowed}
+.btn-outline{display:flex;width:100%;align-items:center;justify-content:center;gap:.5rem;border:1px solid #cbd5e1;border-radius:.5rem;background:#fff;color:#334155;padding:.5rem .75rem;font-size:.75rem;font-weight:500;margin-top:.75rem}
+.btn-outline:hover{background:#f8fafc}
+.hint{text-align:center;font-size:.6875rem;color:var(--faint);margin-top:.5rem}
+.err{margin-top:.75rem;border-radius:.5rem;background:var(--red-bg);padding:.5rem;font-size:.75rem;color:var(--red)}
+.empty{display:flex;height:12rem;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--faint);font-size:.75rem}
+.empty svg{margin-bottom:.5rem;opacity:.45}
+.risk-box{border-radius:var(--r);border:1px solid;padding:1rem;text-align:center;margin-bottom:1rem}
+.risk-box .emoji{font-size:1.875rem}
+.risk-box .label{font-size:1.125rem;font-weight:700;margin-top:.25rem}
+.risk-alto{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
+.risk-medio{background:var(--amber-bg);border-color:var(--amber-line);color:var(--amber)}
+.risk-bajo{background:var(--green-bg);border-color:var(--green-line);color:var(--green)}
+.metric{margin-bottom:.75rem}
+.metric-top{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-bottom:.25rem}
+.metric-top b{color:var(--ink)}
+.bar{height:.5rem;background:#f1f5f9;border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;border-radius:999px;transition:width .6s ease}
+.bar-red{background:#ef4444}.bar-amber{background:#f59e0b}.bar-green{background:#10b981}
+.metric-note{font-size:.625rem;color:var(--faint);font-style:italic;margin-top:.25rem}
+.mini-row{display:flex;justify-content:space-between;align-items:center;border-radius:.375rem;background:#f8fafc;padding:.375rem .5rem;font-size:.75rem;margin-bottom:.375rem}
+.rec-head{display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.75rem}
+.rec-head p{font-size:.875rem;font-weight:600}
+.rec-text{font-size:.75rem;color:var(--muted);line-height:1.6;margin-bottom:.75rem}
+.hallazgos{margin-bottom:.75rem}
+.hallazgos p{font-size:.75rem;font-weight:500;margin-bottom:.25rem}
+.hallazgos li{font-size:.75rem;color:var(--muted);margin-left:1rem}
+.summary-card{margin-top:1rem}
+.summary-card p{font-size:.75rem;color:var(--muted);line-height:1.6;margin-top:.25rem}
+.modules{margin-top:1rem;display:grid;grid-template-columns:1fr;gap:1rem}
+@media(min-width:768px){.modules{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1280px){.modules{grid-template-columns:repeat(3,1fr)}}
+.mod{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:1rem}
+.mod-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem}
+.mod-head h3{font-size:.875rem;flex:1}
+.mod-count{background:#f1f5f9;border-radius:999px;padding:.125rem .5rem;font-size:.75rem;color:var(--muted)}
+.mod-empty{font-size:.75rem;color:var(--faint);font-style:italic}
+.item{border:1px solid #f1f5f9;background:#f8fafc;border-radius:.5rem;padding:.625rem;font-size:.75rem;margin-bottom:.5rem}
+.item-top{display:flex;justify-content:space-between;gap:.5rem}
+.item-top b{font-weight:600;color:var(--ink)}
+.item-sub{color:var(--muted);margin-top:.125rem}
+.item-foot{display:flex;justify-content:space-between;align-items:center;margin-top:.375rem;gap:.5rem;flex-wrap:wrap}
+.badge{display:inline-block;border-radius:999px;padding:.125rem .5rem;font-size:.625rem;font-weight:500}
+.badge-alta{background:#d1fae5;color:#047857}
+.badge-media{background:#fef3c7;color:#b45309}
+.badge-baja{background:#e2e8f0;color:#475569}
+.chips{font-size:.625rem;color:var(--muted)}
+.link{font-size:.6875rem;color:var(--blue);text-decoration:none}
+.link:hover{text-decoration:underline}
+.tag-motivo{display:inline-block;background:#e2e8f0;border-radius:.25rem;padding:.125rem .375rem;font-size:.625rem;color:#475569;margin-top:.25rem}
+.amenaza{display:inline-flex;align-items:center;gap:.25rem;font-size:.75rem;font-weight:600}
+.dot{width:.5rem;height:.5rem;border-radius:50%;display:inline-block}
+.reminder{grid-column:1/-1;border:1px solid var(--amber-line);background:var(--amber-bg);border-radius:var(--r);padding:1rem}
+@media(min-width:1280px){.reminder{grid-column:span 2}}
+.reminder h3{font-size:.875rem;color:#92400e;margin-bottom:.25rem}
+.reminder p{font-size:.75rem;color:#92400e;line-height:1.6}
+.spin{animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>Radar Marcario Ecuador™</h1>
+    <p>Capa de inteligencia marcaria y competitiva previa al registro · ULPIK</p>
+  </div>
+
+  <div class="notice">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+    <p>Sistema de <strong>apoyo a la decisión</strong>, no conclusión legal definitiva. Las similitudes fonética, ortográfica y visual se calculan localmente; el análisis complementario usa <strong>IA</strong> (sin búsqueda web en vivo en esta versión). Complementa —no reemplaza— la búsqueda fonética oficial en SENADI. Verifica cada hallazgo.</p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>Datos de búsqueda</h2>
+      <label class="field"><span>Nombre propuesto <span class="req">*</span></span><input id="inNombre" placeholder="Ej. ULPIK"></label>
+      <label class="field"><span>Actividad / productos o servicios</span><input id="inActividad" placeholder="Ej. servicios legales / registro de marcas"></label>
+      <label class="field"><span>Clase Niza (opcional)</span><input id="inClase" placeholder="Ej. 45"></label>
+      <button type="button" class="btn-main" id="btnAnalizar">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <span id="btnLabel">Analizar Riesgo</span>
+      </button>
+      <p class="hint hidden" id="loadHint">Consultando IA · puede tardar unos segundos</p>
+      <div class="err hidden" id="errBox"></div>
+    </div>
+
+    <div class="card">
+      <h2>Score General de Riesgo</h2>
+      <div id="panelScore">
+        <div class="empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <p>Ingresa una marca y presiona<br>“Analizar Riesgo”.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Recomendación legal</h2>
+      <div id="panelRec">
+        <div class="empty"><p>La recomendación estratégica aparecerá aquí.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card summary-card hidden" id="panelSummary">
+    <h2>Resumen de la investigación</h2>
+    <p id="summaryText"></p>
+  </div>
+
+  <div class="modules hidden" id="panelModules"></div>
+</div>
+
+<script>
+/* ============ MOTOR DE SIMILITUD ============ */
+function stripAccents(s){return(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"")}
+function normalizeBasic(s){return stripAccents((s||"").toLowerCase()).replace(/[^a-z0-9ñ ]/g,"").replace(/\s+/g," ").trim()}
+function phoneticKeyEs(input){
+  let s=stripAccents((input||"").toLowerCase()).replace(/[^a-zñ]/g,"");
+  s=s.replace(/ch/g,"C").replace(/ll/g,"y").replace(/rr/g,"r").replace(/qu/g,"k")
+    .replace(/gu([ei])/g,"g$1").replace(/c([ei])/g,"s$1").replace(/c/g,"k")
+    .replace(/z/g,"s").replace(/v/g,"b").replace(/h/g,"").replace(/x/g,"ks")
+    .replace(/w/g,"u").replace(/ñ/g,"n").replace(/j/g,"g").replace(/(.)\1+/g,"$1").replace(/C/g,"ch");
+  return s;
+}
+function visualKey(s){
+  let x=normalizeBasic(s).replace(/ /g,"");
+  x=x.replace(/rn/g,"m").replace(/[il1j]/g,"i").replace(/[o0]/g,"o").replace(/(.)\1+/g,"$1");
+  return x;
+}
+function levenshtein(a,b){
+  const m=a.length,n=b.length;if(!m)return n;if(!n)return m;
+  const d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++)d[0][j]=j;
+  for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)
+    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return d[m][n];
+}
+function simPct(a,b){if(!a&&!b)return 0;const max=Math.max(a.length,b.length)||1;return Math.round((1-levenshtein(a,b)/max)*100)}
+const phoneticSim=(x,y)=>simPct(phoneticKeyEs(x),phoneticKeyEs(y));
+const ortoSim=(x,y)=>simPct(normalizeBasic(x).replace(/ /g,""),normalizeBasic(y).replace(/ /g,""));
+const visualSim=(x,y)=>simPct(visualKey(x),visualKey(y));
+const maxNameSim=(a,b)=>Math.max(phoneticSim(a,b),ortoSim(a,b),visualSim(a,b));
+
+function normLvl(l){const x=(l||"").toLowerCase();return{media:"medio",alta:"alto",baja:"bajo"}[x]||x||"medio"}
+const lvlNum=l=>({alto:3,medio:2,bajo:1}[normLvl(l)]||2);
+const simToLevel=p=>(p>=80?3:p>=60?2:1);
+function compositeRisk({maxName,jur,com}){
+  const score=simToLevel(maxName)*0.4+lvlNum(jur)*0.35+lvlNum(com)*0.25;
+  if(score>=2.4)return{key:"alto",label:"Alto",emoji:"🔴"};
+  if(score>=1.7)return{key:"medio",label:"Medio",emoji:"🟡"};
+  return{key:"bajo",label:"Bajo",emoji:"🟢"};
+}
+
+const RISK_STYLES={
+  alto:{box:"risk-alto",text:"var(--red)",dot:"#ef4444"},
+  medio:{box:"risk-medio",text:"var(--amber)",dot:"#f59e0b"},
+  bajo:{box:"risk-bajo",text:"var(--green)",dot:"#10b981"}
+};
+const CONF_CLS={alta:"badge-alta",media:"badge-media",baja:"badge-baja"};
+const TIPO_LABEL={
+  fonetica:"nombre similar (fonética)",ortografica:"nombre similar (ortografía)",
+  visual:"nombre similar (visual)",conceptual:"concepto similar",propuesta_de_valor:"propuesta de valor similar"
+};
+const REC_LABEL={
+  registrar:{t:"Registro recomendable",c:"var(--green)"},
+  registrar_con_observaciones:{t:"Registro recomendable con observaciones",c:"var(--amber)"},
+  alto_riesgo:{t:"Alto riesgo de oposición",c:"var(--red)"},
+  replantear:{t:"Se recomienda replantear el nombre",c:"var(--red)"}
+};
+const REL_THRESHOLD=45;
+
+const esc=t=>String(t==null?"":t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $=id=>document.getElementById(id);
+
+let form={nombre:"",actividad:"",clase:""};
+let loading=false;
+let result=null;
+
+function barColor(p){return p>=80?"bar-red":p>=60?"bar-amber":"bar-green"}
+function metricBar(label,pct,note){
+  return`<div class="metric"><div class="metric-top"><span>${esc(label)}</span><b>${pct}%</b></div><div class="bar"><div class="bar-fill ${barColor(pct)}" style="width:${pct}%"></div></div>${note?`<p class="metric-note">${esc(note)}</p>`:""}</div>`;
+}
+function confBadge(c){const k=(c||"media").toLowerCase();return`<span class="badge ${CONF_CLS[k]||CONF_CLS.media}">conf. ${esc(k)}</span>`}
+function simChips(name,target){
+  return`<span class="chips">Fon ${phoneticSim(name,target)}% · Ort ${ortoSim(name,target)}% · Vis ${visualSim(name,target)}%</span>`;
+}
+function sourceLink(url){
+  if(!url)return'<span class="chips" style="font-style:italic">sin fuente — verificar</span>';
+  return`<a class="link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ fuente</a>`;
+}
+
+async function investigar({nombre,actividad,clase}){
+  const schema=`{
+  "summary": "resumen ejecutivo en 2-3 frases",
+  "similitud_conceptual": {"pct": 0, "nota": "qué idea/concepto comparte con la coincidencia más cercana"},
+  "redes": [{"plataforma":"","usuario":"","nombre_mostrado":"","actividad":"","ciudad":"","fuente_url":"","confianza":"alta|media|baja"}],
+  "empresarial": [{"razon_social":"","ciudad":"","actividad":"","fuente_url":"","confianza":"alta|media|baja"}],
+  "dominios": [{"dominio":"","estado":"","titular":"","fecha":"","fuente_url":"","confianza":"alta|media|baja"}],
+  "competidores": [{"nombre":"","ciudad":"","actividad":"","tipo_similitud":"fonetica|ortografica|visual|conceptual|propuesta_de_valor","amenaza":"alto|medio|bajo","fuente_url":""}],
+  "riesgo_juridico": {"nivel":"alto|medio|bajo","justificacion":""},
+  "riesgo_comercial": {"nivel":"alto|medio|bajo","justificacion":""},
+  "recomendacion": {"tipo":"registrar|registrar_con_observaciones|alto_riesgo|replantear","texto":""},
+  "hallazgos_clave": ["","",""]
+}`;
+
+  const system=`Eres un equipo de élite: abogado de Propiedad Intelectual y derecho marcario ecuatoriano (Decisión 486 de la CAN; principios de especialidad y territorialidad; riesgo de confusión conceptual, visual, ortográfico y fonético; riesgo de asociación) + analista OSINT. Investigas conflictos marcarios y comerciales en Ecuador.
+
+REGLAS ESTRICTAS:
+1) Usa SOLO datos que puedas respaldar con razonamiento conservador. NUNCA inventes nombres, titulares, cifras, fechas ni URLs.
+2) Si un módulo no tiene evidencia suficiente, devuelve arreglo vacío [].
+3) fuente_url solo si tienes una URL plausible y verificable; si no, déjala vacía.
+4) Marca confianza: alta / media / baja.
+5) COMPETIDORES: incluye una marca SOLO si su NOMBRE tiene similitud fonética, ortográfica o visual con la marca propuesta, O si transmite el mismo concepto/propuesta de valor. Indica tipo_similitud.
+6) REDES y EMPRESARIAL: solo coincidencias cuyo nombre se parezca al propuesto.
+7) No emitas conclusiones legales definitivas. Sé conservador.
+
+Devuelve EXCLUSIVAMENTE un objeto JSON válido, sin texto adicional, sin markdown, sin comillas triples.`;
+
+  const user=`Analiza posibles conflictos para esta marca propuesta en Ecuador:
+- Nombre propuesto: ${nombre}
+- Actividad / productos o servicios: ${actividad||"(no especificada)"}
+- Clase Niza: ${clase||"(no especificada)"}
+
+Evalúa conflictos potenciales en Ecuador en:
+1) Redes sociales: cuentas con ese nombre o muy similar.
+2) Empresarial: razones sociales con nombre similar.
+3) Comercial digital: dominios .ec/.com/.net, marketplaces.
+4) Competidores cercanos según la regla 5 del sistema.
+
+Estima similitud conceptual (0-100) entre el nombre propuesto y la coincidencia más cercana por significado.
+
+Devuelve JSON con esta forma EXACTA (máximo 3 ítems por módulo; justificaciones de una frase; todo en español):
+${schema}`;
+
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      model:"claude-sonnet-4-6",
+      max_tokens:4000,
+      system,
+      messages:[{role:"user",content:user}]
+    })
+  });
+  if(!res.ok){
+    let msg="La API respondió "+res.status;
+    try{const e=await res.json();if(e.error)msg=e.error;}catch(_){}
+    throw new Error(msg);
+  }
+  const data=await res.json();
+  const text=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join("\n");
+  const start=text.indexOf("{"),end=text.lastIndexOf("}");
+  if(start===-1||end===-1)throw new Error("No se pudo interpretar la respuesta de la investigación.");
+  return JSON.parse(text.slice(start,end+1));
+}
+
+function renderScore(){
+  const el=$("panelScore");
+  if(!result){
+    el.innerHTML='<div class="empty"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><p>Ingresa una marca y presiona<br>“Analizar Riesgo”.</p></div>';
+    return;
+  }
+  const rs=RISK_STYLES[result.risk.key];
+  el.innerHTML=
+    `<div class="risk-box ${rs.box}"><div class="emoji">${result.risk.emoji}</div><div class="label">Riesgo ${esc(result.risk.label)}</div></div>`+
+    metricBar("Similitud fonética",result.maxPhon)+
+    metricBar("Similitud ortográfica",result.maxOrto)+
+    metricBar("Similitud visual",result.maxVis)+
+    metricBar("Similitud conceptual",result.conceptualPct,result.similitud_conceptual?.nota)+
+    `<div class="mini-row"><span>Riesgo Jurídico</span><b style="color:${RISK_STYLES[normLvl(result.riesgo_juridico?.nivel)]?.text||"inherit"}">${esc(normLvl(result.riesgo_juridico?.nivel).toUpperCase())}</b></div>`+
+    `<div class="mini-row"><span>Riesgo Comercial</span><b style="color:${RISK_STYLES[normLvl(result.riesgo_comercial?.nivel)]?.text||"inherit"}">${esc(normLvl(result.riesgo_comercial?.nivel).toUpperCase())}</b></div>`;
+}
+
+function renderRec(){
+  const el=$("panelRec");
+  if(!result){el.innerHTML='<div class="empty"><p>La recomendación estratégica aparecerá aquí.</p></div>';return;}
+  const rec=REC_LABEL[result.recomendacion?.tipo]||{t:"—",c:"var(--muted)"};
+  const hall=(result.hallazgos_clave||[]).map(h=>`<li>${esc(h)}</li>`).join("");
+  el.innerHTML=
+    `<div class="rec-head"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${rec.c}" stroke-width="2"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg><p style="color:${rec.c}">${esc(rec.t)}</p></div>`+
+    `<p class="rec-text">${esc(result.recomendacion?.texto||"")}</p>`+
+    (hall?`<div class="hallazgos"><p>Hallazgos clave</p><ul>${hall}</ul></div>`:"")+
+    `<button type="button" class="btn-outline" id="btnDownload">⬇ Descargar informe ejecutivo</button>`;
+  $("btnDownload").onclick=descargarInforme;
+}
+
+function moduleBlock(title,count,inner){
+  return`<div class="mod"><div class="mod-head"><h3>${esc(title)}</h3><span class="mod-count">${count}</span></div>${count===0?'<p class="mod-empty">Sin coincidencias relevantes detectadas.</p>':inner}</div>`;
+}
+
+function renderModules(){
+  const wrap=$("panelModules");
+  if(!result){wrap.classList.add("hidden");return;}
+  wrap.classList.remove("hidden");
+
+  const redes=(result.redes||[]).map(r=>`<div class="item"><div class="item-top"><b>${esc(r.nombre_mostrado||r.usuario)}</b>${confBadge(r.confianza)}</div><p class="item-sub">${esc(r.plataforma)} · ${esc(r.usuario)} · ${esc(r.ciudad||"ciudad n/d")}</p><p class="item-sub">${esc(r.actividad||"actividad n/d")}</p><div class="item-foot">${simChips(r.nombre_mostrado||r.usuario,form.nombre)}${sourceLink(r.fuente_url)}</div></div>`).join("");
+
+  const emp=(result.empresarial||[]).map(r=>`<div class="item"><div class="item-top"><b>${esc(r.razon_social)}</b>${confBadge(r.confianza)}</div><p class="item-sub">${esc(r.ciudad||"—")} · ${esc(r.actividad||"—")}</p><div class="item-foot">${simChips(r.razon_social,form.nombre)}${sourceLink(r.fuente_url)}</div></div>`).join("");
+
+  const dom=(result.dominios||[]).map(r=>`<div class="item"><div class="item-top"><b style="font-family:monospace">${esc(r.dominio)}</b>${confBadge(r.confianza)}</div><p class="item-sub">${esc(r.estado||"—")} · ${esc(r.titular||"titular n/d")} · ${esc(r.fecha||"fecha n/d")}</p><div class="item-foot" style="justify-content:flex-end">${sourceLink(r.fuente_url)}</div></div>`).join("");
+
+  const comp=(result.competidores||[]).map(r=>{
+    const a=normLvl(r.amenaza);
+    const rs=RISK_STYLES[a]||RISK_STYLES.medio;
+    return`<div class="item"><div class="item-top"><b>${esc(r.nombre)}</b><span class="amenaza" style="color:${rs.text}"><span class="dot" style="background:${rs.dot}"></span>amenaza ${esc(a)}</span></div><p class="item-sub">${esc(r.ciudad||"—")} · ${esc(r.actividad||"—")}</p><span class="tag-motivo">motivo: ${esc(TIPO_LABEL[(r.tipo_similitud||"").toLowerCase()]||"no especificado")}</span><div class="item-foot">${simChips(r.nombre,form.nombre)}${sourceLink(r.fuente_url)}</div></div>`;
+  }).join("");
+
+  wrap.innerHTML=
+    moduleBlock("Conflictos en redes sociales",(result.redes||[]).length,redes)+
+    moduleBlock("Conflictos empresariales",(result.empresarial||[]).length,emp)+
+    moduleBlock("Conflictos comerciales digitales",(result.dominios||[]).length,dom)+
+    moduleBlock("Competidores cercanos",(result.competidores||[]).length,comp)+
+    `<div class="reminder"><h3>⚠ Recordatorio</h3><p>Cada ítem muestra su parecido de nombre (Fon/Ort/Vis) y el motivo de su inclusión. La ausencia de coincidencias aquí <strong>no garantiza</strong> registrabilidad: la búsqueda fonética oficial en SENADI sigue siendo indispensable. Confirma los hallazgos no verificados en su fuente.</p></div>`;
+}
+
+function renderAll(){
+  renderScore();
+  renderRec();
+  if(result?.summary){
+    $("panelSummary").classList.remove("hidden");
+    $("summaryText").textContent=result.summary;
+  }else{
+    $("panelSummary").classList.add("hidden");
+  }
+  renderModules();
+}
+
+function setLoading(on){
+  loading=on;
+  $("btnAnalizar").disabled=on;
+  $("loadHint").classList.toggle("hidden",!on);
+  const label=$("btnLabel");
+  if(on){
+    label.innerHTML='<svg class="spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> Investigando…';
+  }else{
+    label.textContent="Analizar Riesgo";
+  }
+}
+
+async function analizar(){
+  form.nombre=$("inNombre").value.trim();
+  form.actividad=$("inActividad").value.trim();
+  form.clase=$("inClase").value.trim();
+  if(!form.nombre){$("errBox").textContent="Ingresa el nombre propuesto de la marca.";$("errBox").classList.remove("hidden");return;}
+  $("errBox").classList.add("hidden");
+  setLoading(true);
+  result=null;
+  renderAll();
+  try{
+    const data=await investigar(form);
+    const nombre=form.nombre;
+    const redes=(data.redes||[]).filter(r=>maxNameSim(nombre,r.nombre_mostrado||r.usuario||"")>=REL_THRESHOLD);
+    const empresarial=(data.empresarial||[]).filter(e=>maxNameSim(nombre,e.razon_social||"")>=REL_THRESHOLD);
+    const dominios=data.dominios||[];
+    const competidores=(data.competidores||[]).filter(c=>{
+      const t=(c.tipo_similitud||"").toLowerCase();
+      if(t==="conceptual"||t==="propuesta_de_valor")return true;
+      return maxNameSim(nombre,c.nombre||"")>=30;
+    });
+    const candidatos=[...redes.map(r=>r.nombre_mostrado||r.usuario),...empresarial.map(e=>e.razon_social),...competidores.map(c=>c.nombre)].filter(Boolean);
+    let maxPhon=0,maxOrto=0,maxVis=0;
+    candidatos.forEach(n=>{maxPhon=Math.max(maxPhon,phoneticSim(nombre,n));maxOrto=Math.max(maxOrto,ortoSim(nombre,n));maxVis=Math.max(maxVis,visualSim(nombre,n));});
+    const conceptualPct=Math.max(0,Math.min(100,Number(data.similitud_conceptual?.pct)||0));
+    const maxName=Math.max(maxPhon,maxOrto,maxVis,conceptualPct);
+    const risk=compositeRisk({maxName,jur:data.riesgo_juridico?.nivel,com:data.riesgo_comercial?.nivel});
+    result={...data,redes,empresarial,dominios,competidores,maxPhon,maxOrto,maxVis,conceptualPct,risk};
+    renderAll();
+  }catch(e){
+    $("errBox").textContent="No se pudo completar la investigación: "+(e.message||String(e))+". Intenta de nuevo en unos segundos.";
+    $("errBox").classList.remove("hidden");
+  }finally{
+    setLoading(false);
+  }
+}
+
+function descargarInforme(){
+  if(!result)return;
+  const r=result;
+  const row=cells=>`<tr>${cells.map(c=>`<td style="border:1px solid #ddd;padding:6px;font-size:12px">${esc(String(c??"—"))}</td>`).join("")}</tr>`;
+  const opon=[
+    ...(r.empresarial||[]).map(x=>[x.razon_social,x.ciudad||"—","Empresarial",x.confianza]),
+    ...(r.redes||[]).map(x=>[x.nombre_mostrado||x.usuario,x.plataforma||"—","Redes",x.confianza]),
+    ...(r.dominios||[]).map(x=>[x.dominio,x.titular||"—","Dominio",x.confianza]),
+    ...(r.competidores||[]).map(x=>[x.nombre,x.ciudad||"—","Competidor",normLvl(x.amenaza)])
+  ];
+  const html=`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Informe — ${esc(form.nombre)}</title></head>
+<body style="font-family:system-ui,Arial,sans-serif;max-width:760px;margin:32px auto;color:#1e293b;line-height:1.5">
+<p style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">Radar Marcario Ecuador™ — Informe de apoyo a la decisión</p>
+<h1 style="margin:4px 0">Resumen Ejecutivo</h1>
+<h2>Marca analizada: ${esc(form.nombre)}</h2>
+<p><strong>Actividad:</strong> ${esc(form.actividad||"—")} &nbsp; <strong>Clase Niza:</strong> ${esc(form.clase||"—")}</p>
+<p style="font-size:20px"><strong>Nivel de riesgo: ${r.risk.emoji} ${esc(r.risk.label)}</strong></p>
+<p><strong>Fonética:</strong> ${r.maxPhon}% · <strong>Ortográfica:</strong> ${r.maxOrto}% · <strong>Visual:</strong> ${r.maxVis}% · <strong>Conceptual:</strong> ${r.conceptualPct}%</p>
+<p>${esc(r.summary||"")}</p>
+<h3>Principales hallazgos</h3>
+<ul>${(r.hallazgos_clave||[]).map(h=>`<li>${esc(h)}</li>`).join("")}</ul>
+<h3>Evaluación de riesgo</h3>
+<p><strong>Jurídico (${esc(normLvl(r.riesgo_juridico?.nivel))}):</strong> ${esc(r.riesgo_juridico?.justificacion)}</p>
+<p><strong>Comercial (${esc(normLvl(r.riesgo_comercial?.nivel))}):</strong> ${esc(r.riesgo_comercial?.justificacion)}</p>
+<h3>Potenciales oponentes / coincidencias</h3>
+<table style="border-collapse:collapse;width:100%"><tr style="background:#f1f5f9">${["Nombre","Ciudad/Detalle","Tipo","Confianza/Amenaza"].map(h=>`<th style="border:1px solid #ddd;padding:6px;font-size:12px;text-align:left">${h}</th>`).join("")}</tr>${opon.map(row).join("")||row(["Sin coincidencias","—","—","—"])}</table>
+<h3>Recomendación estratégica</h3>
+<p><strong>${esc(REC_LABEL[r.recomendacion?.tipo]?.t||"—")}.</strong> ${esc(r.recomendacion?.texto)}</p>
+<hr style="margin:24px 0;border:none;border-top:1px solid #e2e8f0">
+<p style="font-size:11px;color:#94a3b8">Documento de apoyo a la toma de decisiones. No sustituye la búsqueda fonética oficial en SENADI ni constituye conclusión legal definitiva. Generado el ${new Date().toLocaleDateString("es-EC")}.</p>
+</body></html>`;
+  const blob=new Blob([html],{type:"text/html"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="informe-marcario-"+(normalizeBasic(form.nombre).replace(/ /g,"-")||"marca")+".html";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+$("btnAnalizar").onclick=analizar;
+$("inNombre").addEventListener("keydown",e=>{if(e.key==="Enter")analizar()});
+</script>
+</body>
+</html>
