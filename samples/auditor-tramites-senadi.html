@@ -149,7 +149,6 @@
     position:relative;
   }
   .dropzone:hover{border-color:var(--verde);}
-  .dropzone.over{border-color:var(--verde); background:#eefaf9;}
   .dropzone.filled{border-style:solid; border-color:var(--verde); background:#eefaf9;}
   .dropzone .tag{
     font-size:10.5px;
@@ -386,30 +385,30 @@
       <p class="sub">El formulario es obligatorio. El certificado de descuento y el logotipo son opcionales, pero mientras más subas, más completa la auditoría.</p>
 
       <div class="drop-grid">
-        <div class="dropzone" id="dz-formulario" role="button" tabindex="0">
+        <label class="dropzone" id="dz-formulario">
           <span class="icon">📄</span>
           <span class="tag">Formulario <span class="req">· obligatorio</span></span>
           <span class="fname" id="fn-formulario">PDF de solicitud</span>
-          <input type="file" accept=".pdf,application/pdf" id="in-formulario">
-        </div>
-        <div class="dropzone" id="dz-descuento" role="button" tabindex="0">
+          <input type="file" accept="application/pdf" id="in-formulario">
+        </label>
+        <label class="dropzone" id="dz-descuento">
           <span class="icon">🧾</span>
           <span class="tag">Certificado de descuento</span>
           <span class="fname" id="fn-descuento">PDF (opcional)</span>
-          <input type="file" accept=".pdf,application/pdf" id="in-descuento">
-        </div>
-        <div class="dropzone" id="dz-logo" role="button" tabindex="0">
+          <input type="file" accept="application/pdf" id="in-descuento">
+        </label>
+        <label class="dropzone" id="dz-logo">
           <span class="icon">🎨</span>
           <span class="tag">Logotipo</span>
           <span class="fname" id="fn-logo">Imagen (opcional)</span>
           <input type="file" accept="image/*" id="in-logo">
-        </div>
-        <div class="dropzone" id="dz-nombramiento" role="button" tabindex="0">
+        </label>
+        <label class="dropzone" id="dz-nombramiento">
           <span class="icon">🏛️</span>
           <span class="tag">Nombramiento representante</span>
           <span class="fname" id="fn-nombramiento">PDF (opcional)</span>
-          <input type="file" accept=".pdf,application/pdf" id="in-nombramiento">
-        </div>
+          <input type="file" accept="application/pdf" id="in-nombramiento">
+        </label>
       </div>
 
       <button class="primary" id="btn-auditar" disabled>Auditar trámite</button>
@@ -428,12 +427,12 @@
       <h2>Registrar una observación real</h2>
       <p class="sub">Pega el texto de la notificación de observación del SENADI (o sube el PDF). El sistema extrae el patrón y lo guarda para que futuras auditorías lo detecten antes de subir el trámite.</p>
 
-      <div class="dropzone" id="dz-obs-pdf" role="button" tabindex="0" style="max-width:280px;">
+      <label class="dropzone" id="dz-obs-pdf" style="max-width:280px;">
         <span class="icon">📥</span>
         <span class="tag">Subir PDF de la observación</span>
         <span class="fname" id="fn-obs-pdf">opcional — o pega el texto abajo</span>
-        <input type="file" accept=".pdf,application/pdf" id="in-obs-pdf">
-      </div>
+        <input type="file" accept="application/pdf" id="in-obs-pdf">
+      </label>
 
       <label class="field-label">Texto de la notificación</label>
       <textarea id="obs-texto" rows="7" placeholder="Pega aquí el texto completo de la observación del SENADI…"></textarea>
@@ -492,9 +491,7 @@
 </div>
 
 <script>
-if (typeof pdfjsLib !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-}
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
 // ---------- Encabezados oficiales de la Clasificación de Niza, 13ª ed., versión 2026a ----------
 const REGLAS_NIZA = `
@@ -670,9 +667,6 @@ function contextoObservaciones(items){
 
 // ---------- Extracción de PDF ----------
 async function extraerTextoPDF(file){
-  if (typeof pdfjsLib === 'undefined') {
-    throw new Error('No se pudo cargar el lector de PDF. Recarga la página e intenta de nuevo.');
-  }
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data: buf}).promise;
   let texto = '';
@@ -736,51 +730,17 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 // ---------- Tab 1: Auditar ----------
 let files = { formulario:null, descuento:null, logo:null, nombramiento:null };
 
-function setPickedFile(key, file, dz, fnId){
-  if(!file) return;
-  files[key] = file;
-  document.getElementById(fnId).textContent = file.name;
-  dz.classList.add('filled');
-  checkReady();
-}
-
 function bindDropzone(id, inputId, fnId, key){
   const dz = document.getElementById(id);
   const input = document.getElementById(inputId);
-  if(!dz || !input) return;
-
-  // Evitar doble diálogo: NO usar <label> + input.click()
-  dz.addEventListener('click', (e)=>{
-    if(e.target === input) return;
-    e.preventDefault();
-    input.click();
-  });
-  dz.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter' || e.key === ' '){
-      e.preventDefault();
-      input.click();
-    }
-  });
-  input.addEventListener('click', (e)=> e.stopPropagation());
+  dz.addEventListener('click', ()=> input.click());
   input.addEventListener('change', ()=>{
-    if(input.files && input.files[0]) setPickedFile(key, input.files[0], dz, fnId);
-  });
-
-  ['dragenter','dragover'].forEach(ev=>{
-    dz.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); dz.classList.add('over'); });
-  });
-  ['dragleave','drop'].forEach(ev=>{
-    dz.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('over'); });
-  });
-  dz.addEventListener('drop', (e)=>{
-    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if(!f) return;
-    try{
-      const dt = new DataTransfer();
-      dt.items.add(f);
-      input.files = dt.files;
-    }catch(_){ /* algunos navegadores no permiten setear input.files */ }
-    setPickedFile(key, f, dz, fnId);
+    if(input.files && input.files[0]){
+      files[key] = input.files[0];
+      document.getElementById(fnId).textContent = input.files[0].name;
+      dz.classList.add('filled');
+    }
+    checkReady();
   });
 }
 bindDropzone('dz-formulario','in-formulario','fn-formulario','formulario');
@@ -899,47 +859,19 @@ function renderResultado(json){
 }
 
 // ---------- Tab 2: Observaciones ----------
-(function bindObsPdf(){
-  const dz = document.getElementById('dz-obs-pdf');
-  const input = document.getElementById('in-obs-pdf');
-  if(!dz || !input) return;
-  dz.addEventListener('click', (e)=>{
-    if(e.target === input) return;
-    e.preventDefault();
-    input.click();
-  });
-  input.addEventListener('click', (e)=> e.stopPropagation());
-  input.addEventListener('change', async (e)=>{
-    const f = e.target.files[0];
-    if(!f) return;
-    document.getElementById('fn-obs-pdf').textContent = f.name;
-    dz.classList.add('filled');
-    try{
-      const texto = await extraerTextoPDF(f);
-      document.getElementById('obs-texto').value = texto;
-    }catch(err){
-      document.getElementById('error-obs').innerHTML = `<div class="error-box">No se pudo leer el PDF: ${err.message}</div>`;
-    }
-  });
-  ['dragenter','dragover'].forEach(ev=>{
-    dz.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); dz.classList.add('over'); });
-  });
-  ['dragleave','drop'].forEach(ev=>{
-    dz.addEventListener(ev, (e)=>{ e.preventDefault(); e.stopPropagation(); dz.classList.remove('over'); });
-  });
-  dz.addEventListener('drop', async (e)=>{
-    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if(!f) return;
-    document.getElementById('fn-obs-pdf').textContent = f.name;
-    dz.classList.add('filled');
-    try{
-      const texto = await extraerTextoPDF(f);
-      document.getElementById('obs-texto').value = texto;
-    }catch(err){
-      document.getElementById('error-obs').innerHTML = `<div class="error-box">No se pudo leer el PDF: ${err.message}</div>`;
-    }
-  });
-})();
+document.getElementById('dz-obs-pdf').addEventListener('click', ()=> document.getElementById('in-obs-pdf').click());
+document.getElementById('in-obs-pdf').addEventListener('change', async (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  document.getElementById('fn-obs-pdf').textContent = f.name;
+  document.getElementById('dz-obs-pdf').classList.add('filled');
+  try{
+    const texto = await extraerTextoPDF(f);
+    document.getElementById('obs-texto').value = texto;
+  }catch(err){
+    document.getElementById('error-obs').innerHTML = `<div class="error-box">No se pudo leer el PDF: ${err.message}</div>`;
+  }
+});
 
 document.getElementById('btn-registrar-obs').addEventListener('click', async ()=>{
   const texto = document.getElementById('obs-texto').value.trim();

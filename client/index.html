@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet" />
+  <meta name="googlebot" content="noindex, nofollow" />
+  <title>Visualizador · Dashboards</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/shared.css?v=3" />
+  <link rel="stylesheet" href="/client/client.css?v=3" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true"></div>
+          <div class="brand-copy">
+            <p class="brand-title">Dashboards</p>
+            <p class="brand-sub">Visualizador</p>
+          </div>
+        </div>
+        <nav class="nav-links" aria-label="Navegación">
+          <a class="nav-link" href="/admin">Administración</a>
+          <a class="nav-link is-active" href="/">Visualizador</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="page">
+      <section id="gallery-view">
+        <div class="page-header">
+          <div>
+            <h1>Explorar dashboards</h1>
+            <p>Busca por título o filtra por etiquetas para abrir un dashboard en modo seguro.</p>
+          </div>
+        </div>
+
+        <div class="filters panel panel-pad">
+          <div class="filters-row">
+            <div class="field search-field">
+              <label for="search">Buscar por título</label>
+              <input
+                id="search"
+                class="search-input"
+                type="search"
+                placeholder="Escribe para filtrar..."
+                autocomplete="off"
+              />
+            </div>
+            <div class="field">
+              <label>Etiquetas</label>
+              <div class="tags" id="tag-filters" aria-label="Filtros por etiqueta"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="gallery" class="gallery" aria-live="polite"></div>
+      </section>
+
+      <section id="viewer-view" class="viewer-view" hidden>
+        <div class="viewer-toolbar panel panel-pad">
+          <div class="viewer-meta">
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-back">← Volver</button>
+            <div>
+              <h1 id="viewer-title">Dashboard</h1>
+              <p id="viewer-subtitle"></p>
+              <div class="tags" id="viewer-tags"></div>
+            </div>
+          </div>
+          <div class="viewer-actions">
+            <a class="btn btn-secondary btn-sm" id="btn-share" href="#">Compartir</a>
+            <a class="btn btn-ghost btn-sm" id="btn-open-raw" href="#" target="_blank" rel="noopener">Abrir solo</a>
+          </div>
+        </div>
+        <div class="viewer-stage panel">
+          <iframe
+            id="viewer-frame"
+            class="viewer-frame"
+            title="Contenido del dashboard"
+            sandbox="allow-scripts allow-forms allow-modals allow-popups allow-presentation"
+            referrerpolicy="no-referrer"
+            loading="lazy"
+          ></iframe>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/client/client.js?v=3"></script>
+</body>
+</html>
