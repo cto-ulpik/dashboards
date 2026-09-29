@@ -5,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const apiRouter = require('./routes/api');
 const aiRouter = require('./routes/ai');
-const { getDashboard } = require('./db');
+const { getDashboard, getVersion } = require('./db');
 const { injectAiBridge } = require('./aiBridge');
 
 const app = express();
@@ -38,13 +38,8 @@ app.get('/robots.txt', (_req, res) => {
   res.type('text/plain').send('User-agent: *\nDisallow: /\n');
 });
 
-app.get('/view/:id', (req, res) => {
-  const dashboard = getDashboard(req.params.id);
-  if (!dashboard) {
-    return res.status(404).send('Dashboard no encontrado');
-  }
-
-  const filePath = path.join(uploadsDir, path.basename(dashboard.filename));
+function sendDashboardFile(res, dashboard, filename) {
+  const filePath = path.join(uploadsDir, path.basename(filename));
   if (!fs.existsSync(filePath)) {
     return res.status(404).send('Archivo del dashboard no encontrado');
   }
@@ -59,6 +54,24 @@ app.get('/view/:id', (req, res) => {
   }
 
   res.sendFile(filePath);
+}
+
+app.get('/view/:id', (req, res) => {
+  const dashboard = getDashboard(req.params.id);
+  if (!dashboard) {
+    return res.status(404).send('Dashboard no encontrado');
+  }
+  sendDashboardFile(res, dashboard, dashboard.filename);
+});
+
+// Versión anterior (reemplazada) de un dashboard.
+app.get('/view/:id/version/:versionId', (req, res) => {
+  const dashboard = getDashboard(req.params.id);
+  const version = dashboard && getVersion(dashboard.id, Number(req.params.versionId));
+  if (!version) {
+    return res.status(404).send('Versión no encontrada');
+  }
+  sendDashboardFile(res, dashboard, version.filename);
 });
 
 app.get(['/manual', '/manual/'], (_req, res) => {

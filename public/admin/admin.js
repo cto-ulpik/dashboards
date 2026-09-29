@@ -26,10 +26,28 @@
   const deleteMessage = document.getElementById('delete-message');
   const btnCancelDelete = document.getElementById('btn-cancel-delete');
   const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+  const reportTypeInput = document.getElementById('report-type');
+  const reportAreaHint = document.getElementById('report-area-hint');
+  const periodMonthInput = document.getElementById('period-month');
+  const periodYearInput = document.getElementById('period-year');
+  const eventNameInput = document.getElementById('event-name');
+  const replaceModal = document.getElementById('replace-modal');
+  const replaceMessage = document.getElementById('replace-message');
+  const btnCancelReplace = document.getElementById('btn-cancel-replace');
+  const btnConfirmReplace = document.getElementById('btn-confirm-replace');
+
+  const ULPIK_CATEGORY = 'comite-ulpik';
+  const MONTHS = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+  ];
+  const FIRST_YEAR = 2025;
 
   let previewUrl = null;
   let pendingDeleteId = null;
+  let pendingReplace = null;
   let dashboards = [];
+  let ulpikCatalog = { areas: [], reports: [] };
   let previewTimer = null;
   let mode = 'closed'; // closed | new | edit
 
@@ -117,6 +135,66 @@
     showPreviewFromHtml(text);
   }
 
+  function isUlpikForm() {
+    return categoryInput.value === ULPIK_CATEGORY;
+  }
+
+  function selectedReport() {
+    return ulpikCatalog.reports.find((r) => r.id === reportTypeInput.value) || null;
+  }
+
+  function areaLabel(areaId) {
+    return ulpikCatalog.areas.find((a) => a.id === areaId)?.label || areaId;
+  }
+
+  function fillPeriodSelects() {
+    periodMonthInput.innerHTML =
+      '<option value="">Mes</option>' +
+      MONTHS.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`).join('');
+
+    const lastYear = new Date().getFullYear() + 1;
+    const years = [];
+    for (let y = lastYear; y >= FIRST_YEAR; y -= 1) years.push(y);
+    periodYearInput.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join('');
+    periodYearInput.value = String(new Date().getFullYear());
+  }
+
+  function fillReportSelect() {
+    const current = reportTypeInput.value;
+    reportTypeInput.innerHTML =
+      '<option value="">Selecciona el reporte</option>' +
+      ulpikCatalog.areas
+        .map((area) => {
+          const options = ulpikCatalog.reports
+            .filter((r) => r.area === area.id)
+            .map((r) => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.label)}</option>`)
+            .join('');
+          return `<optgroup label="${escapeHtml(area.label)}">${options}</optgroup>`;
+        })
+        .join('');
+    reportTypeInput.value = current;
+  }
+
+  // Muestra los campos del Comité Ulpik o los genéricos según la clasificación.
+  function syncCategoryFields() {
+    const ulpik = isUlpikForm();
+    const report = selectedReport();
+    form.querySelectorAll('[data-fields="ulpik"]').forEach((el) => { el.hidden = !ulpik; });
+    form.querySelectorAll('[data-fields="ulpik-event"]').forEach((el) => {
+      el.hidden = !ulpik || !report?.needsEventName;
+    });
+    form.querySelectorAll('[data-fields="generic"]').forEach((el) => { el.hidden = ulpik; });
+    reportAreaHint.textContent = report
+      ? `Se guardará en el área: ${areaLabel(report.area)}.`
+      : 'El área se asigna sola según el reporte.';
+  }
+
+  function periodValue() {
+    const month = periodMonthInput.value;
+    const year = periodYearInput.value;
+    return month && year ? `${year}-${month}` : '';
+  }
+
   function clearFormFields() {
     form.reset();
     idInput.value = '';
@@ -124,11 +202,16 @@
     subtitleInput.value = '';
     tagsInput.value = '';
     categoryInput.value = '';
+    reportTypeInput.value = '';
+    periodMonthInput.value = '';
+    periodYearInput.value = String(new Date().getFullYear());
+    eventNameInput.value = '';
     needsAiInput.checked = false;
     fileInput.value = '';
     editor.setValue('');
     updateFileLabel();
     clearPreview();
+    syncCategoryFields();
     document.querySelectorAll('.list-item.is-editing').forEach((el) => {
       el.classList.remove('is-editing');
     });
@@ -149,7 +232,7 @@
     editorPanel.hidden = false;
     editor.refresh();
     editorPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    titleInput.focus();
+    categoryInput.focus();
   }
 
   async function openEdit(dashboard) {
@@ -161,6 +244,14 @@
     subtitleInput.value = dashboard.subtitle;
     tagsInput.value = dashboard.tags.join(', ');
     categoryInput.value = dashboard.category || '';
+    reportTypeInput.value = dashboard.reportType || '';
+    if (dashboard.period) {
+      const [year, month] = dashboard.period.split('-');
+      periodYearInput.value = year;
+      periodMonthInput.value = month;
+    }
+    eventNameInput.value = dashboard.eventName || '';
+    syncCategoryFields();
     needsAiInput.checked = Boolean(dashboard.needsAi);
     formTitle.textContent = 'Editar dashboard';
     btnSave.textContent = 'Actualizar';
@@ -223,9 +314,19 @@
 
     listEl.innerHTML = dashboards
       .map((d) => {
-        const tags = d.tags
-          .map((tag) => `<span class="tag tag-static">${escapeHtml(tag)}</span>`)
-          .join('');
+        const isUlpik = d.category === ULPIK_CATEGORY;
+        const tags = isUlpik
+          ? [
+              d.areaLabel && `<span class="tag tag-static">${escapeHtml(d.areaLabel)}</span>`,
+              d.periodLabel && `<span class="tag tag-static tag-period">${escapeHtml(d.periodLabel)}</span>`,
+              !d.reportType && '<span class="tag tag-static tag-period">Sin reporte asignado — pulsa Editar</span>',
+            ].filter(Boolean).join('')
+          : d.tags
+              .map((tag) => `<span class="tag tag-static">${escapeHtml(tag)}</span>`)
+              .join('');
+        const versions = d.versionsCount
+          ? `<button type="button" class="btn btn-ghost btn-sm" data-action="versions">Historial (${d.versionsCount})</button>`
+          : '';
 
         return `
           <article class="list-item" data-id="${escapeHtml(d.id)}">
@@ -237,6 +338,7 @@
                 ${d.needsAi ? '<span class="tag tag-ai">Necesita IA</span>' : ''}
                 ${tags || ''}
               </div>
+              <div class="versions-slot"></div>
               <div class="field" style="margin-top: 0.75rem; max-width: 240px;">
                 <label for="category-${escapeHtml(d.id)}">Clasificación</label>
                 <select id="category-${escapeHtml(d.id)}" data-action="category" data-id="${escapeHtml(d.id)}">
@@ -250,6 +352,7 @@
               </div>
             </div>
             <div class="actions">
+              ${versions}
               <a class="btn btn-secondary btn-sm" href="${escapeHtml(`/view/${d.id}`)}" target="_blank" rel="noopener">Ver</a>
               <button type="button" class="btn btn-secondary btn-sm" data-action="edit">Editar</button>
               <button type="button" class="btn btn-danger btn-sm" data-action="delete">Eliminar</button>
@@ -265,65 +368,138 @@
     if (!res.ok) throw new Error('No se pudo cargar el listado');
     const data = await res.json();
     dashboards = data.dashboards || [];
+    if (data.ulpik) {
+      ulpikCatalog = data.ulpik;
+      fillReportSelect();
+      syncCategoryFields();
+    }
     renderList();
   }
 
-  async function saveDashboard(event) {
-    event.preventDefault();
-
-    const title = titleInput.value.trim();
-    const subtitle = subtitleInput.value.trim();
-    const tags = tagsInput.value.trim();
-    const category = categoryInput.value.trim();
-    const needsAi = needsAiInput.checked;
-    const id = idInput.value.trim();
-    const html = editor.getValue();
-    const file = fileInput.files?.[0];
-
-    if (!title || !subtitle || !tags) {
-      showToast('Completa título, subtítulo y etiquetas', 'error');
+  async function toggleVersions(item, id) {
+    const slot = item.querySelector('.versions-slot');
+    if (slot.innerHTML) {
+      slot.innerHTML = '';
       return;
     }
+    try {
+      const res = await fetch(`/api/dashboards/${id}/versions`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'No se pudo cargar el historial');
+      const rows = (data.versions || [])
+        .map((v) => `
+          <li>
+            <a href="/view/${encodeURIComponent(id)}/version/${v.id}" target="_blank" rel="noopener">Ver versión</a>
+            reemplazada el ${escapeHtml(formatDate(v.replacedAt))}
+          </li>
+        `)
+        .join('');
+      slot.innerHTML = `
+        <div class="versions-box">
+          <strong>Versiones anteriores</strong>
+          <ul>${rows || '<li>Sin versiones anteriores.</li>'}</ul>
+        </div>
+      `;
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  // Lee y valida el formulario. Devuelve null si falta algo.
+  function readForm() {
+    const category = categoryInput.value.trim();
+    const html = editor.getValue();
+    const fields = {
+      category,
+      needsAi: needsAiInput.checked,
+      html,
+    };
 
     if (!category) {
       showToast('Elige una clasificación', 'error');
-      return;
+      return null;
+    }
+
+    if (category === ULPIK_CATEGORY) {
+      const report = selectedReport();
+      const period = periodValue();
+      const eventName = eventNameInput.value.trim();
+      if (!report) {
+        showToast('Elige el reporte', 'error');
+        return null;
+      }
+      if (!period) {
+        showToast('Elige el mes y el año del reporte', 'error');
+        return null;
+      }
+      if (report.needsEventName && !eventName) {
+        showToast('Escribe el nombre del evento', 'error');
+        return null;
+      }
+      Object.assign(fields, { reportType: report.id, period, eventName });
+    } else {
+      const title = titleInput.value.trim();
+      const subtitle = subtitleInput.value.trim();
+      const tags = tagsInput.value.trim();
+      if (!title || !subtitle || !tags) {
+        showToast('Completa título, subtítulo y etiquetas', 'error');
+        return null;
+      }
+      Object.assign(fields, { title, subtitle, tags });
     }
 
     if (!html.trim()) {
       showToast('El HTML no puede estar vacío', 'error');
-      return;
+      return null;
     }
 
+    return fields;
+  }
+
+  function sendDashboard(id, fields, file) {
+    const url = id ? `/api/dashboards/${id}` : '/api/dashboards';
+    const method = id ? 'PUT' : 'POST';
+
+    if (file) {
+      const body = new FormData();
+      Object.entries(fields).forEach(([key, value]) => {
+        if (value === undefined) return;
+        if (key === 'needsAi') {
+          body.append('needs_ai', value ? '1' : '0');
+        } else if (key === 'replace') {
+          body.append('replace', value ? '1' : '0');
+        } else {
+          body.append(key, value);
+        }
+      });
+      body.append('file', file);
+      return fetch(url, { method, body });
+    }
+
+    return fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fields),
+    });
+  }
+
+  async function submitDashboard(id, fields, file) {
     btnSave.disabled = true;
     try {
-      let res;
-
-      if (file) {
-        const body = new FormData();
-        body.append('title', title);
-        body.append('subtitle', subtitle);
-        body.append('tags', tags);
-        body.append('category', category);
-        body.append('needs_ai', needsAi ? '1' : '0');
-        body.append('html', html);
-        body.append('file', file);
-        res = await fetch(id ? `/api/dashboards/${id}` : '/api/dashboards', {
-          method: id ? 'PUT' : 'POST',
-          body,
-        });
-      } else {
-        res = await fetch(id ? `/api/dashboards/${id}` : '/api/dashboards', {
-          method: id ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, subtitle, tags, category, needsAi, html }),
-        });
-      }
-
+      const res = await sendDashboard(id, fields, file);
       const data = await res.json().catch(() => ({}));
+
+      if (res.status === 409 && data.code === 'duplicate') {
+        openReplaceModal({ id, fields, file }, data.error);
+        return;
+      }
       if (!res.ok) throw new Error(data.error || 'No se pudo guardar');
 
-      showToast(id ? 'Dashboard actualizado' : 'Dashboard creado');
+      if (data.replaced) {
+        showToast('Reporte reemplazado. La versión anterior quedó en el historial');
+      } else {
+        showToast(id ? 'Dashboard actualizado' : 'Dashboard creado');
+      }
       closeEditor();
       await loadDashboards();
     } catch (err) {
@@ -331,6 +507,31 @@
     } finally {
       btnSave.disabled = false;
     }
+  }
+
+  async function saveDashboard(event) {
+    event.preventDefault();
+    const fields = readForm();
+    if (!fields) return;
+    await submitDashboard(idInput.value.trim(), fields, fileInput.files?.[0]);
+  }
+
+  function openReplaceModal(request, message) {
+    pendingReplace = request;
+    replaceMessage.textContent = message;
+    replaceModal.classList.add('is-open');
+  }
+
+  function closeReplaceModal() {
+    pendingReplace = null;
+    replaceModal.classList.remove('is-open');
+  }
+
+  async function confirmReplace() {
+    if (!pendingReplace) return;
+    const { id, fields, file } = pendingReplace;
+    closeReplaceModal();
+    await submitDashboard(id, { ...fields, replace: true }, file);
   }
 
   async function changeCategory(id, category) {
@@ -454,6 +655,11 @@
       return;
     }
 
+    if (button.dataset.action === 'versions') {
+      toggleVersions(item, id);
+      return;
+    }
+
     if (button.dataset.action === 'delete') {
       openDeleteModal(id);
     }
@@ -474,7 +680,21 @@
     if (event.target === deleteModal) closeDeleteModal();
   });
 
+  btnCancelReplace.addEventListener('click', closeReplaceModal);
+  btnConfirmReplace.addEventListener('click', confirmReplace);
+  replaceModal.addEventListener('click', (event) => {
+    if (event.target === replaceModal) closeReplaceModal();
+  });
+
+  categoryInput.addEventListener('change', syncCategoryFields);
+  reportTypeInput.addEventListener('change', syncCategoryFields);
+  fillPeriodSelects();
+
   document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && replaceModal.classList.contains('is-open')) {
+      closeReplaceModal();
+      return;
+    }
     if (event.key === 'Escape' && deleteModal.classList.contains('is-open')) {
       closeDeleteModal();
       return;

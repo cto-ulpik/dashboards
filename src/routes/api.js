@@ -9,10 +9,17 @@ const {
   createDashboard,
   updateDashboard,
   replaceDashboardFile,
+  archiveVersion,
+  listVersions,
   deleteDashboard,
   getAllTags,
   CATEGORIES,
+  ULPIK_AREAS,
+  ULPIK_REPORTS,
+  isUlpik,
   normalizeCategory,
+  normalizeUlpikFields,
+  findUlpikDuplicate,
   parseNeedsAi,
 } = require('../db');
 
@@ -56,11 +63,22 @@ const upload = multer({
   limits: { fileSize: MAX_HTML_BYTES },
 });
 
+const ULPIK_CATALOG = { areas: ULPIK_AREAS, reports: ULPIK_REPORTS };
+
 function removeFileSafe(filename) {
   if (!filename) return;
   const filePath = path.join(uploadsDir, path.basename(filename));
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
+  }
+}
+
+// En el Comité Ulpik el HTML anterior se guarda como versión; en el resto se borra.
+function retireFile(dashboard, category) {
+  if (isUlpik(category) || isUlpik(dashboard.category)) {
+    archiveVersion(dashboard.id, dashboard.filename);
+  } else {
+    removeFileSafe(dashboard.filename);
   }
 }
 
@@ -73,6 +91,30 @@ function validateMeta({ title, subtitle, tags, category }) {
     errors.push('La clasificación es obligatoria (Comité Ulpik, Comité MQI o Herramientas)');
   }
   return errors;
+}
+
+// Valida los metadatos según la clasificación. El Comité Ulpik pide reporte y mes
+// en vez de título, subtítulo y etiquetas.
+function resolveMeta(input) {
+  const category = normalizeCategory(input.category);
+  if (!isUlpik(category)) {
+    return { errors: validateMeta(input), meta: { ...input, category } };
+  }
+
+  const { errors, value } = normalizeUlpikFields(input);
+  return { errors, meta: { category, ...value } };
+}
+
+function ulpikFieldsFromBody(body, existing = {}) {
+  return {
+    reportType: body.reportType ?? body.report_type ?? existing.reportType,
+    period: body.period ?? existing.period,
+    eventName: body.eventName ?? body.event_name ?? existing.eventName,
+  };
+}
+
+function duplicateMessage(dashboard) {
+  return `Ya existe «${dashboard.title}». Si continúas, se reemplaza y la versión anterior queda guardada en el historial.`;
 }
 
 function writeHtmlFile(html, baseName = 'dashboard') {
@@ -113,8 +155,12 @@ function resolveHtmlSource(req) {
   return null;
 }
 
+function storeSource(source, baseName) {
+  return source.type === 'file' ? source.filename : writeHtmlFile(source.html, baseName);
+}
+
 router.get('/categories', (_req, res) => {
-  res.json({ categories: CATEGORIES });
+  res.json({ categories: CATEGORIES, ulpik: ULPIK_CATALOG });
 });
 
 router.get('/dashboards', (req, res) => {
@@ -123,6 +169,7 @@ router.get('/dashboards', (req, res) => {
     dashboards: listDashboards({ q, tag, category }),
     tags: getAllTags(),
     categories: CATEGORIES,
+    ulpik: ULPIK_CATALOG,
   });
 });
 
@@ -148,6 +195,15 @@ router.get('/dashboards/:id/content', (req, res) => {
   res.json({ id: dashboard.id, html });
 });
 
+router.get('/dashboards/:id/versions', (req, res) => {
+  const dashboard = getDashboard(req.params.id);
+  if (!dashboard) {
+    return res.status(404).json({ error: 'Dashboard no encontrado' });
+  }
+  const versions = listVersions(dashboard.id).map(({ filename: _f, ...version }) => version);
+  res.json({ id: dashboard.id, versions });
+});
+
 router.post('/dashboards', (req, res, next) => {
   const contentType = req.headers['content-type'] || '';
   if (contentType.includes('multipart/form-data')) {
@@ -157,7 +213,13 @@ router.post('/dashboards', (req, res, next) => {
 }, (req, res) => {
   try {
     const { title, subtitle, tags, category, needs_ai, needsAi } = req.body;
-    const errors = validateMeta({ title, subtitle, tags, category });
+    const { errors, meta } = resolveMeta({
+      title,
+      subtitle,
+      tags,
+      category,
+      ...ulpikFieldsFromBody(req.body),
+    });
     const source = resolveHtmlSource(req);
 
     if (!source) {
@@ -169,20 +231,35 @@ router.post('/dashboards', (req, res, next) => {
       return res.status(400).json({ error: errors.join('. ') });
     }
 
-    let filename;
-    if (source.type === 'file') {
-      filename = source.filename;
-    } else {
-      filename = writeHtmlFile(source.html, title);
+    const nextNeedsAi = parseNeedsAi(needsAi ?? needs_ai);
+
+    if (isUlpik(meta.category)) {
+      const duplicate = findUlpikDuplicate(meta);
+      if (duplicate) {
+        if (!parseNeedsAi(req.body.replace)) {
+          if (req.file) removeFileSafe(req.file.filename);
+          return res.status(409).json({
+            error: duplicateMessage(duplicate),
+            code: 'duplicate',
+            existingId: duplicate.id,
+          });
+        }
+
+        // Reemplazo confirmado: mismo dashboard (mismo link), HTML nuevo, el anterior al historial.
+        const filename = storeSource(source, meta.reportType);
+        updateDashboard(duplicate.id, { ...meta, needsAi: nextNeedsAi });
+        retireFile(duplicate, meta.category);
+        replaceDashboardFile(duplicate.id, filename);
+        return res.json({ ...getDashboard(duplicate.id), replaced: true });
+      }
     }
+
+    const filename = storeSource(source, meta.title || meta.reportType);
 
     const dashboard = createDashboard({
       id: uuidv4(),
-      title,
-      subtitle,
-      tags,
-      category,
-      needsAi: parseNeedsAi(needsAi ?? needs_ai),
+      ...meta,
+      needsAi: nextNeedsAi,
       filename,
     });
 
@@ -212,7 +289,20 @@ router.put('/dashboards/:id', (req, res, next) => {
     const tags = req.body.tags ?? existing.tags.join(', ');
     const category = req.body.category ?? existing.category;
     const needsAiRaw = req.body.needsAi ?? req.body.needs_ai;
-    const errors = validateMeta({ title, subtitle, tags, category });
+    const { errors, meta } = resolveMeta({
+      title,
+      subtitle,
+      tags,
+      category,
+      ...ulpikFieldsFromBody(req.body, existing),
+    });
+
+    if (!errors.length && isUlpik(meta.category)) {
+      const duplicate = findUlpikDuplicate({ ...meta, excludeId: existing.id });
+      if (duplicate) {
+        errors.push(`Ya existe «${duplicate.title}». Elige otro mes o edita ese dashboard`);
+      }
+    }
 
     if (errors.length) {
       if (req.file) removeFileSafe(req.file.filename);
@@ -220,22 +310,14 @@ router.put('/dashboards/:id', (req, res, next) => {
     }
 
     updateDashboard(req.params.id, {
-      title,
-      subtitle,
-      tags,
-      category,
+      ...meta,
       needsAi: needsAiRaw === undefined ? existing.needsAi : parseNeedsAi(needsAiRaw),
     });
 
     const source = resolveHtmlSource(req);
     if (source) {
-      let filename;
-      if (source.type === 'file') {
-        filename = source.filename;
-      } else {
-        filename = writeHtmlFile(source.html, title);
-      }
-      removeFileSafe(existing.filename);
+      const filename = storeSource(source, meta.title || meta.reportType);
+      retireFile(existing, meta.category);
       replaceDashboardFile(req.params.id, filename);
     }
 
@@ -253,10 +335,20 @@ router.patch('/dashboards/:id/category', (req, res) => {
       return res.status(404).json({ error: 'Dashboard no encontrado' });
     }
 
-    const category = req.body?.category;
-    if (!normalizeCategory(category)) {
+    const category = normalizeCategory(req.body?.category);
+    if (!category) {
       return res.status(400).json({
         error: 'La clasificación es obligatoria (Comité Ulpik, Comité MQI o Herramientas)',
+      });
+    }
+
+    if (category === existing.category) {
+      return res.json(existing);
+    }
+
+    if (isUlpik(category)) {
+      return res.status(400).json({
+        error: 'Para pasarlo al Comité Ulpik, pulsa Editar y elige el reporte y el mes',
       });
     }
 
@@ -286,7 +378,7 @@ router.put('/dashboards/:id/content', (req, res) => {
     }
 
     const filename = writeHtmlFile(html, existing.title);
-    removeFileSafe(existing.filename);
+    retireFile(existing, existing.category);
     replaceDashboardFile(req.params.id, filename);
 
     res.json({ id: existing.id, ok: true });
@@ -301,6 +393,7 @@ router.delete('/dashboards/:id', (req, res) => {
     return res.status(404).json({ error: 'Dashboard no encontrado' });
   }
   removeFileSafe(deleted.filename);
+  deleted.versions.forEach((version) => removeFileSafe(version.filename));
   res.json({ ok: true, id: deleted.id });
 });
 

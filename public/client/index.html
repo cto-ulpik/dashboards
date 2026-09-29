@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="/ulpik5.png" />
   <link rel="stylesheet" href="/css/shared.css?v=9" />
-  <link rel="stylesheet" href="/client/client.css?v=9" />
+  <link rel="stylesheet" href="/client/client.css?v=10" />
 </head>
 <body>
   <div class="app-shell">
@@ -41,6 +41,35 @@
           </div>
         </div>
         <div id="category-grid" class="category-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="areas-view" hidden>
+        <div class="page-header list-header">
+          <div>
+            <button type="button" class="btn btn-secondary btn-sm" data-back="categories">← Categorías</button>
+            <h1>Comité Ulpik</h1>
+            <p>Elige el área para ver sus reportes y el historial de cada mes.</p>
+          </div>
+        </div>
+        <div id="area-grid" class="category-grid area-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="reports-view" hidden>
+        <div class="page-header list-header">
+          <div>
+            <button type="button" class="btn btn-secondary btn-sm" data-back="areas">← Comité Ulpik</button>
+            <h1 id="reports-title">Área</h1>
+            <p id="reports-subtitle">Reportes del área</p>
+          </div>
+        </div>
+
+        <div class="panel list-panel">
+          <div class="list-head" aria-hidden="true">
+            <span>Reporte</span>
+            <span>Mes · Acción</span>
+          </div>
+          <div id="report-list" class="dashboard-list" aria-live="polite"></div>
+        </div>
       </section>
 
       <section id="list-view" hidden>
@@ -78,6 +107,6 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/client/client.js?v=7"></script>
+  <script src="/client/client.js?v=8"></script>
 </body>
 </html>
