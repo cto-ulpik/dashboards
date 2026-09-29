@@ -55,6 +55,100 @@
   background: linear-gradient(145deg, #5b3b12, #f59e0b);
 }
 
+.area-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.area-card {
+  min-height: 210px;
+}
+
+.area-latest {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.category-mark.is-area-comercial {
+  background: linear-gradient(145deg, #115e59, #14b8a6);
+}
+
+.category-mark.is-area-finanzas {
+  background: linear-gradient(145deg, #14532d, #4ade80);
+}
+
+.category-mark.is-area-experiencia {
+  background: linear-gradient(145deg, #4c1d95, #a78bfa);
+}
+
+.category-mark.is-area-cursos {
+  background: linear-gradient(145deg, #7c2d12, #fb923c);
+}
+
+.category-mark.is-area-none {
+  background: linear-gradient(145deg, #334155, #94a3b8);
+}
+
+.list-main-static h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.list-main-static p {
+  margin: 0.28rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.report-row.is-empty {
+  background: var(--surface-2);
+}
+
+.report-row.is-empty h2 {
+  color: var(--muted);
+}
+
+.report-row .list-actions {
+  align-items: center;
+}
+
+.period-select {
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  border-radius: 999px;
+  padding: 0.42rem 0.8rem;
+  font-size: 0.86rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.period-select:focus {
+  outline: none;
+  border-color: #5eead4;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.18);
+}
+
+.period-chip {
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 0 0.35rem;
+  white-space: nowrap;
+}
+
+.badge-pending {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: var(--warning);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+
 .category-count {
   font-family: var(--mono);
   font-size: 0.78rem;
@@ -199,7 +293,8 @@
 }
 
 @media (max-width: 900px) {
-  .category-grid {
+  .category-grid,
+  .area-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -218,8 +313,16 @@
     width: 100%;
   }
 
+  .list-actions {
+    flex-wrap: wrap;
+  }
+
   .list-actions .btn {
     flex: 1;
     justify-content: center;
+  }
+
+  .period-select {
+    flex-basis: 100%;
   }
 }
