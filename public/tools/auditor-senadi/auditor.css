@@ -424,3 +424,16 @@ footer.note{
 
 /* Fuera de .drop-grid el label quedaba en línea y se veía desarmado. */
 label.dropzone{display:block;}
+
+select{
+  width:100%;
+  font-family:'DM Sans', sans-serif;
+  font-size:14px;
+  padding:12px;
+  border:1px solid var(--linea);
+  border-radius:2px;
+  background:var(--blanco);
+  color:var(--tinta);
+}
+select:focus{outline:2px solid var(--verde); outline-offset:1px;}
+label.field-label .req{color:var(--naranja);}

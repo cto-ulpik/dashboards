@@ -18,6 +18,12 @@ function extraerJSON(texto) {
   return JSON.parse(t);
 }
 
+// "Ab." solo no cuenta: tiene que haber un nombre después del título.
+function hasSignerName(firmante) {
+  const nombre = firmante.replace(/^ab(og(ado|ada))?\.?\s*/i, '');
+  return (nombre.match(/\p{L}/gu) || []).length >= 3;
+}
+
 function text(value) {
   return String(value ?? '').slice(0, MAX_TEXT).trim();
 }
@@ -121,6 +127,10 @@ router.post('/senadi/alcance', async (req, res) => {
     if (!observacion) {
       return res.status(400).json({ error: 'Pega el texto de la observación recibida.' });
     }
+    const firmante = String(req.body?.firmante ?? '').trim().replace(/\s+/g, ' ').slice(0, 100);
+    if (!hasSignerName(firmante)) {
+      return res.status(400).json({ error: 'Escribe el nombre del abogado o abogada que firma el alcance.' });
+    }
     const borrador = await askAi(
       prompts.ALCANCE_SYSTEM,
       prompts.alcanceUser({
@@ -130,7 +140,8 @@ router.post('/senadi/alcance', async (req, res) => {
       }),
       2500
     );
-    res.json({ borrador: borrador.trim() });
+    const firma = prompts.alcanceFirma({ firmante, cierre: req.body?.cierre });
+    res.json({ borrador: `${borrador.trim()}\n\n${firma}` });
   } catch (err) {
     fail(res, err, 'No se pudo generar el borrador');
   }
