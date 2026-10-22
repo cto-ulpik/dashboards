@@ -14,12 +14,12 @@ const {
   deleteDashboard,
   getAllTags,
   CATEGORIES,
-  ULPIK_AREAS,
-  ULPIK_REPORTS,
-  isUlpik,
+  CATALOGS,
+  hasCatalog,
+  categoryLabel,
   normalizeCategory,
-  normalizeUlpikFields,
-  findUlpikDuplicate,
+  normalizeReportFields,
+  findReportDuplicate,
   parseNeedsAi,
 } = require('../db');
 
@@ -63,8 +63,6 @@ const upload = multer({
   limits: { fileSize: MAX_HTML_BYTES },
 });
 
-const ULPIK_CATALOG = { areas: ULPIK_AREAS, reports: ULPIK_REPORTS };
-
 function removeFileSafe(filename) {
   if (!filename) return;
   const filePath = path.join(uploadsDir, path.basename(filename));
@@ -73,9 +71,9 @@ function removeFileSafe(filename) {
   }
 }
 
-// En el Comité Ulpik el HTML anterior se guarda como versión; en el resto se borra.
+// En los comités con catálogo el HTML anterior se guarda como versión; en el resto se borra.
 function retireFile(dashboard, category) {
-  if (isUlpik(category) || isUlpik(dashboard.category)) {
+  if (hasCatalog(category) || hasCatalog(dashboard.category)) {
     archiveVersion(dashboard.id, dashboard.filename);
   } else {
     removeFileSafe(dashboard.filename);
@@ -93,19 +91,19 @@ function validateMeta({ title, subtitle, tags, category }) {
   return errors;
 }
 
-// Valida los metadatos según la clasificación. El Comité Ulpik pide reporte y mes
-// en vez de título, subtítulo y etiquetas.
+// Valida los metadatos según la clasificación. Los comités con catálogo piden
+// reporte y mes en vez de título, subtítulo y etiquetas.
 function resolveMeta(input) {
   const category = normalizeCategory(input.category);
-  if (!isUlpik(category)) {
+  if (!hasCatalog(category)) {
     return { errors: validateMeta(input), meta: { ...input, category } };
   }
 
-  const { errors, value } = normalizeUlpikFields(input);
+  const { errors, value } = normalizeReportFields(category, input);
   return { errors, meta: { category, ...value } };
 }
 
-function ulpikFieldsFromBody(body, existing = {}) {
+function reportFieldsFromBody(body, existing = {}) {
   return {
     reportType: body.reportType ?? body.report_type ?? existing.reportType,
     period: body.period ?? existing.period,
@@ -160,7 +158,7 @@ function storeSource(source, baseName) {
 }
 
 router.get('/categories', (_req, res) => {
-  res.json({ categories: CATEGORIES, ulpik: ULPIK_CATALOG });
+  res.json({ categories: CATEGORIES, catalogs: CATALOGS });
 });
 
 router.get('/dashboards', (req, res) => {
@@ -169,7 +167,7 @@ router.get('/dashboards', (req, res) => {
     dashboards: listDashboards({ q, tag, category }),
     tags: getAllTags(),
     categories: CATEGORIES,
-    ulpik: ULPIK_CATALOG,
+    catalogs: CATALOGS,
   });
 });
 
@@ -218,7 +216,7 @@ router.post('/dashboards', (req, res, next) => {
       subtitle,
       tags,
       category,
-      ...ulpikFieldsFromBody(req.body),
+      ...reportFieldsFromBody(req.body),
     });
     const source = resolveHtmlSource(req);
 
@@ -233,8 +231,8 @@ router.post('/dashboards', (req, res, next) => {
 
     const nextNeedsAi = parseNeedsAi(needsAi ?? needs_ai);
 
-    if (isUlpik(meta.category)) {
-      const duplicate = findUlpikDuplicate(meta);
+    if (hasCatalog(meta.category)) {
+      const duplicate = findReportDuplicate(meta);
       if (duplicate) {
         if (!parseNeedsAi(req.body.replace)) {
           if (req.file) removeFileSafe(req.file.filename);
@@ -294,11 +292,11 @@ router.put('/dashboards/:id', (req, res, next) => {
       subtitle,
       tags,
       category,
-      ...ulpikFieldsFromBody(req.body, existing),
+      ...reportFieldsFromBody(req.body, existing),
     });
 
-    if (!errors.length && isUlpik(meta.category)) {
-      const duplicate = findUlpikDuplicate({ ...meta, excludeId: existing.id });
+    if (!errors.length && hasCatalog(meta.category)) {
+      const duplicate = findReportDuplicate({ ...meta, excludeId: existing.id });
       if (duplicate) {
         errors.push(`Ya existe «${duplicate.title}». Elige otro mes o edita ese dashboard`);
       }
@@ -346,9 +344,9 @@ router.patch('/dashboards/:id/category', (req, res) => {
       return res.json(existing);
     }
 
-    if (isUlpik(category)) {
+    if (hasCatalog(category)) {
       return res.status(400).json({
-        error: 'Para pasarlo al Comité Ulpik, pulsa Editar y elige el reporte y el mes',
+        error: `Para pasarlo a ${categoryLabel(category)}, pulsa Editar y elige el reporte y el mes`,
       });
     }
 

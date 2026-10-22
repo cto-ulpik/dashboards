@@ -36,7 +36,6 @@
   const btnCancelReplace = document.getElementById('btn-cancel-replace');
   const btnConfirmReplace = document.getElementById('btn-confirm-replace');
 
-  const ULPIK_CATEGORY = 'comite-ulpik';
   const MONTHS = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
@@ -47,7 +46,7 @@
   let pendingDeleteId = null;
   let pendingReplace = null;
   let dashboards = [];
-  let ulpikCatalog = { areas: [], reports: [] };
+  let catalogs = {};
   let previewTimer = null;
   let mode = 'closed'; // closed | new | edit
 
@@ -135,16 +134,17 @@
     showPreviewFromHtml(text);
   }
 
-  function isUlpikForm() {
-    return categoryInput.value === ULPIK_CATEGORY;
+  // Catálogo (áreas + reportes) de la clasificación elegida, o null si es una lista libre.
+  function formCatalog() {
+    return catalogs[categoryInput.value] || null;
   }
 
   function selectedReport() {
-    return ulpikCatalog.reports.find((r) => r.id === reportTypeInput.value) || null;
+    return formCatalog()?.reports.find((r) => r.id === reportTypeInput.value) || null;
   }
 
   function areaLabel(areaId) {
-    return ulpikCatalog.areas.find((a) => a.id === areaId)?.label || areaId;
+    return formCatalog()?.areas.find((a) => a.id === areaId)?.label || areaId;
   }
 
   function fillPeriodSelects() {
@@ -160,30 +160,37 @@
   }
 
   function fillReportSelect() {
+    const catalog = formCatalog();
     const current = reportTypeInput.value;
+    reportTypeInput.dataset.category = categoryInput.value;
     reportTypeInput.innerHTML =
       '<option value="">Selecciona el reporte</option>' +
-      ulpikCatalog.areas
+      (catalog?.areas || [])
         .map((area) => {
-          const options = ulpikCatalog.reports
+          const options = catalog.reports
             .filter((r) => r.area === area.id)
             .map((r) => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.label)}</option>`)
             .join('');
-          return `<optgroup label="${escapeHtml(area.label)}">${options}</optgroup>`;
+          const owner = area.owner ? ` (${area.owner})` : '';
+          return `<optgroup label="${escapeHtml(area.label + owner)}">${options}</optgroup>`;
         })
         .join('');
     reportTypeInput.value = current;
   }
 
-  // Muestra los campos del Comité Ulpik o los genéricos según la clasificación.
+  // Muestra los campos de reporte + mes (comités con catálogo) o los genéricos.
   function syncCategoryFields() {
-    const ulpik = isUlpikForm();
+    if (reportTypeInput.dataset.category !== categoryInput.value) {
+      reportTypeInput.value = '';
+      fillReportSelect();
+    }
+    const structured = Boolean(formCatalog());
     const report = selectedReport();
-    form.querySelectorAll('[data-fields="ulpik"]').forEach((el) => { el.hidden = !ulpik; });
-    form.querySelectorAll('[data-fields="ulpik-event"]').forEach((el) => {
-      el.hidden = !ulpik || !report?.needsEventName;
+    form.querySelectorAll('[data-fields="report"]').forEach((el) => { el.hidden = !structured; });
+    form.querySelectorAll('[data-fields="report-event"]').forEach((el) => {
+      el.hidden = !structured || !report?.needsEventName;
     });
-    form.querySelectorAll('[data-fields="generic"]').forEach((el) => { el.hidden = ulpik; });
+    form.querySelectorAll('[data-fields="generic"]').forEach((el) => { el.hidden = structured; });
     reportAreaHint.textContent = report
       ? `Se guardará en el área: ${areaLabel(report.area)}.`
       : 'El área se asigna sola según el reporte.';
@@ -244,6 +251,7 @@
     subtitleInput.value = dashboard.subtitle;
     tagsInput.value = dashboard.tags.join(', ');
     categoryInput.value = dashboard.category || '';
+    syncCategoryFields(); // carga los reportes del comité antes de elegir uno
     reportTypeInput.value = dashboard.reportType || '';
     if (dashboard.period) {
       const [year, month] = dashboard.period.split('-');
@@ -314,8 +322,7 @@
 
     listEl.innerHTML = dashboards
       .map((d) => {
-        const isUlpik = d.category === ULPIK_CATEGORY;
-        const tags = isUlpik
+        const tags = catalogs[d.category]
           ? [
               d.areaLabel && `<span class="tag tag-static">${escapeHtml(d.areaLabel)}</span>`,
               d.periodLabel && `<span class="tag tag-static tag-period">${escapeHtml(d.periodLabel)}</span>`,
@@ -368,8 +375,8 @@
     if (!res.ok) throw new Error('No se pudo cargar el listado');
     const data = await res.json();
     dashboards = data.dashboards || [];
-    if (data.ulpik) {
-      ulpikCatalog = data.ulpik;
+    if (data.catalogs) {
+      catalogs = data.catalogs;
       fillReportSelect();
       syncCategoryFields();
     }
@@ -420,7 +427,7 @@
       return null;
     }
 
-    if (category === ULPIK_CATEGORY) {
+    if (formCatalog()) {
       const report = selectedReport();
       const period = periodValue();
       const eventName = eventNameInput.value.trim();
