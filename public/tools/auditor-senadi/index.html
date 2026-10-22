@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<title>Auditor SENADI · Ulpik</title>
+<link rel="icon" type="image/png" href="/ulpik5.png">
+<link rel="stylesheet" href="/tools/auditor-senadi/auditor.css?v=1">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back-link" href="/?category=herramientas">← Herramientas</a>
+
+  <header>
+    <div>
+      <div class="brand">Ulpik · Legaltech</div>
+      <h1>Auditor de Trámites SENADI</h1>
+      <p class="lede">Revisa formularios de registro marcario antes de subirlos, para llegar a cero observaciones de forma.</p>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="auditar"><span class="num">01</span>Auditar trámite</button>
+    <button class="tab-btn" data-tab="observaciones"><span class="num">02</span>Base de observaciones</button>
+    <button class="tab-btn" data-tab="alcance"><span class="num">03</span>Generar alcance</button>
+  </nav>
+
+  <!-- TAB 1: AUDITAR -->
+  <section class="panel active" id="panel-auditar">
+    <div class="card">
+      <h2>Sube los documentos del trámite</h2>
+      <p class="sub">El formulario es obligatorio. El certificado de descuento y el logotipo son opcionales, pero mientras más subas, más completa la auditoría.</p>
+
+      <div class="drop-grid">
+        <label class="dropzone" id="dz-formulario">
+          <span class="icon">📄</span>
+          <span class="tag">Formulario <span class="req">· obligatorio</span></span>
+          <span class="fname" id="fn-formulario">PDF de solicitud</span>
+          <input type="file" accept="application/pdf" id="in-formulario">
+        </label>
+        <label class="dropzone" id="dz-descuento">
+          <span class="icon">🧾</span>
+          <span class="tag">Certificado de descuento</span>
+          <span class="fname" id="fn-descuento">PDF (opcional)</span>
+          <input type="file" accept="application/pdf" id="in-descuento">
+        </label>
+        <label class="dropzone" id="dz-logo">
+          <span class="icon">🎨</span>
+          <span class="tag">Logotipo</span>
+          <span class="fname" id="fn-logo">Imagen (opcional)</span>
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" id="in-logo">
+        </label>
+        <label class="dropzone" id="dz-nombramiento">
+          <span class="icon">🏛️</span>
+          <span class="tag">Nombramiento representante</span>
+          <span class="fname" id="fn-nombramiento">PDF (opcional)</span>
+          <input type="file" accept="application/pdf" id="in-nombramiento">
+        </label>
+      </div>
+
+      <button class="primary" id="btn-auditar" disabled>Auditar trámite</button>
+      <div class="loading" id="loading-auditar" style="display:none;">
+        <div class="spinner"></div><span id="loading-auditar-txt">Leyendo documentos…</span>
+      </div>
+      <div id="error-auditar"></div>
+    </div>
+
+    <div id="resultado-auditoria"></div>
+  </section>
+
+  <!-- TAB 2: OBSERVACIONES -->
+  <section class="panel" id="panel-observaciones">
+    <div id="import-slot"></div>
+
+    <div class="card">
+      <h2>Registrar una observación real</h2>
+      <p class="sub">Pega el texto de la notificación de observación del SENADI (o sube el PDF). El sistema extrae el patrón y lo guarda en la base compartida del equipo, para que todas las auditorías futuras lo detecten antes de subir el trámite.</p>
+
+      <label class="dropzone" id="dz-obs-pdf" style="max-width:280px;">
+        <span class="icon">📥</span>
+        <span class="tag">Subir PDF de la observación</span>
+        <span class="fname" id="fn-obs-pdf">opcional — o pega el texto abajo</span>
+        <input type="file" accept="application/pdf" id="in-obs-pdf">
+      </label>
+
+      <label class="field-label" for="obs-texto">Texto de la notificación</label>
+      <textarea id="obs-texto" rows="7" placeholder="Pega aquí el texto completo de la observación del SENADI…"></textarea>
+
+      <div class="autor-row">
+        <label class="field-label" for="obs-autor">Registrada por</label>
+        <input type="text" id="obs-autor" maxlength="80" placeholder="Tu nombre (ej. Sofía)">
+      </div>
+
+      <button class="primary" id="btn-registrar-obs">Registrar en la base</button>
+      <div class="loading" id="loading-obs" style="display:none;">
+        <div class="spinner"></div><span>Extrayendo el patrón…</span>
+      </div>
+      <div id="error-obs"></div>
+    </div>
+
+    <div class="card">
+      <h2>Observaciones registradas <span class="count-pill" id="obs-count">0</span><span class="shared-pill">Compartida</span></h2>
+      <p class="sub">Esta base es la misma para todo el equipo y se usa como contexto adicional en cada auditoría de la pestaña 1.</p>
+      <div id="lista-observaciones"><p class="empty">Cargando…</p></div>
+    </div>
+  </section>
+
+  <!-- TAB 3: ALCANCE -->
+  <section class="panel" id="panel-alcance">
+    <div class="card">
+      <h2>Generar solicitud de alcance</h2>
+      <p class="sub">Pega la observación recibida del SENADI. El borrador sigue el formato y tono de tus solicitudes de alcance ya presentadas.</p>
+
+      <div class="row2">
+        <div>
+          <label class="field-label" for="alcance-tramite">No. de trámite</label>
+          <input type="text" id="alcance-tramite" placeholder="SENADI-2026-XXXXX">
+        </div>
+        <div>
+          <label class="field-label" for="alcance-denom">Denominación</label>
+          <input type="text" id="alcance-denom" placeholder="NOMBRE MÁS LOGOTIPO">
+        </div>
+      </div>
+
+      <label class="field-label" for="alcance-obs">Texto de la observación recibida</label>
+      <textarea id="alcance-obs" rows="7" placeholder="Pega aquí el texto de la notificación del SENADI…"></textarea>
+
+      <button class="primary" id="btn-generar-alcance">Generar borrador</button>
+      <div class="loading" id="loading-alcance" style="display:none;">
+        <div class="spinner"></div><span>Redactando el alcance…</span>
+      </div>
+      <div id="error-alcance"></div>
+
+      <div id="alcanceOutput" style="display:none;"></div>
+      <div class="toolbar" id="alcance-toolbar" style="display:none;">
+        <button class="secondary" id="btn-copiar-alcance">Copiar texto</button>
+        <button class="secondary" id="btn-descargar-alcance">Descargar .txt</button>
+      </div>
+    </div>
+  </section>
+
+  <footer class="note">
+    Herramienta interna de apoyo. Las alertas marcadas como <b>verificar manualmente</b> no tienen suficiente certeza para ser tratadas como error confirmado — revísalas tú antes de decidir. La auditoría no reemplaza el criterio del abogado patrocinador.
+  </footer>
+</div>
+
+<script src="/tools/auditor-senadi/auditor.js?v=1"></script>
+</body>
+</html>

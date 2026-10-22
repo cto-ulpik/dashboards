@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const apiRouter = require('./routes/api');
 const aiRouter = require('./routes/ai');
+const toolsRouter = require('./routes/tools');
 const { getDashboard, getVersion } = require('./db');
 const { injectAiBridge } = require('./aiBridge');
 
@@ -31,6 +32,7 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
+app.use('/api/tools', toolsRouter);
 app.use('/api', apiRouter);
 app.use('/api/ai', aiRouter);
 
@@ -76,6 +78,10 @@ app.get('/view/:id/version/:versionId', (req, res) => {
 
 app.get(['/manual', '/manual/'], (_req, res) => {
   res.sendFile(path.join(publicDir, 'manual', 'index.html'));
+});
+
+app.get(['/herramientas/auditor-senadi', '/herramientas/auditor-senadi/'], (_req, res) => {
+  res.sendFile(path.join(publicDir, 'tools', 'auditor-senadi', 'index.html'));
 });
 
 app.get(['/admin', '/admin/'], (_req, res) => {

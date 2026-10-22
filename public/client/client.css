@@ -341,3 +341,26 @@
     flex-basis: 100%;
   }
 }
+
+.programs-grid {
+  margin-bottom: 1.6rem;
+}
+
+.program-card .category-mark.is-program-senadi {
+  background: linear-gradient(145deg, #ff2500, #823bda);
+}
+
+.program-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 0.22rem 0.6rem;
+}
+
+.programs-rest-title {
+  margin: 0 0 0.85rem;
+}
