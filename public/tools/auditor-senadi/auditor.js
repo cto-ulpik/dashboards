@@ -4,6 +4,9 @@
 
   const API = '/api/tools/senadi';
   const AUTHOR_KEY = 'senadi:autor';
+  const SIGNER_KEY = 'senadi:firmante';
+  const CLOSING_KEY = 'senadi:cierre';
+  const SIGNER_PREFIX = 'Ab. ';
   const IMPORT_DONE_KEY = 'senadi:import-done';
   // Un PDF con menos texto que esto probablemente es un escaneo o una imagen.
   const MIN_FORM_TEXT = 80;
@@ -298,10 +301,24 @@
   }
 
   // ---------- 03 Generar alcance ----------
+  const firmanteInput = $('alcance-firmante');
+  const cierreInput = $('alcance-cierre');
+  firmanteInput.value = readLocal(SIGNER_KEY) || SIGNER_PREFIX;
+  cierreInput.value = readLocal(CLOSING_KEY) === 'autorizado' ? 'autorizado' : 'autorizada';
+  cierreInput.addEventListener('change', () => writeLocal(CLOSING_KEY, cierreInput.value));
+
+  // "Ab." solo no cuenta: tiene que haber un nombre después del título.
+  function hasSignerName(value) {
+    const nombre = value.replace(/^ab(og(ado|ada))?\.?\s*/i, '');
+    return (nombre.match(/\p{L}/gu) || []).length >= 3;
+  }
+
   $('btn-generar-alcance').addEventListener('click', async () => {
     const tramite = $('alcance-tramite').value.trim();
     const denominacion = $('alcance-denom').value.trim();
     const observacion = $('alcance-obs').value.trim();
+    const firmante = firmanteInput.value.trim().replace(/\s+/g, ' ');
+    const cierre = cierreInput.value;
     const errBox = $('error-alcance');
     const loading = $('loading-alcance');
     const output = $('alcanceOutput');
@@ -314,11 +331,17 @@
       errBox.innerHTML = errorBox('Pega el texto de la observación recibida.');
       return;
     }
+    if (!hasSignerName(firmante)) {
+      errBox.innerHTML = errorBox('Escribe el nombre del abogado o abogada que firma (ej. Ab. Sofía Becerra).');
+      firmanteInput.focus();
+      return;
+    }
+    writeLocal(SIGNER_KEY, firmante);
     loading.style.display = 'flex';
     try {
       const { borrador } = await api('/alcance', {
         method: 'POST',
-        body: JSON.stringify({ tramite, denominacion, observacion }),
+        body: JSON.stringify({ tramite, denominacion, observacion, firmante, cierre }),
       });
       output.textContent = borrador;
       output.style.display = 'block';
