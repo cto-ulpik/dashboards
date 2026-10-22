@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="/ulpik5.png" />
   <link rel="stylesheet" href="/css/shared.css?v=9" />
-  <link rel="stylesheet" href="/client/client.css?v=10" />
+  <link rel="stylesheet" href="/client/client.css?v=11" />
 </head>
 <body>
   <div class="app-shell">
@@ -47,7 +47,7 @@
         <div class="page-header list-header">
           <div>
             <button type="button" class="btn btn-secondary btn-sm" data-back="categories">← Categorías</button>
-            <h1>Comité Ulpik</h1>
+            <h1 id="areas-title">Comité</h1>
             <p>Elige el área para ver sus reportes y el historial de cada mes.</p>
           </div>
         </div>
@@ -57,7 +57,7 @@
       <section id="reports-view" hidden>
         <div class="page-header list-header">
           <div>
-            <button type="button" class="btn btn-secondary btn-sm" data-back="areas">← Comité Ulpik</button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btn-back-areas" data-back="areas">← Comité</button>
             <h1 id="reports-title">Área</h1>
             <p id="reports-subtitle">Reportes del área</p>
           </div>
@@ -107,6 +107,6 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="/client/client.js?v=8"></script>
+  <script src="/client/client.js?v=9"></script>
 </body>
 </html>

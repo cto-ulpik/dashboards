@@ -6,6 +6,8 @@
   const categoryGrid = document.getElementById('category-grid');
   const areaGrid = document.getElementById('area-grid');
   const reportList = document.getElementById('report-list');
+  const areasTitle = document.getElementById('areas-title');
+  const btnBackAreas = document.getElementById('btn-back-areas');
   const reportsTitle = document.getElementById('reports-title');
   const reportsSubtitle = document.getElementById('reports-subtitle');
   const dashboardList = document.getElementById('dashboard-list');
@@ -16,7 +18,6 @@
   const btnBackCategories = document.getElementById('btn-back-categories');
   const toastEl = document.getElementById('toast');
 
-  const ULPIK_CATEGORY = 'comite-ulpik';
   const UNASSIGNED_AREA = 'sin-asignar';
   const MONTHS = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -43,6 +44,8 @@
     finanzas: { markClass: 'is-area-finanzas' },
     'experiencia-cliente': { markClass: 'is-area-experiencia' },
     cursos: { markClass: 'is-area-cursos', description: 'Eventos, masterclass y cursos.' },
+    'contenido-audiencia': { markClass: 'is-area-contenido' },
+    sostenibilidad: { markClass: 'is-area-sostenibilidad' },
   };
 
   let dashboards = [];
@@ -51,7 +54,7 @@
     { id: 'comite-mqi', label: 'Comité MQI' },
     { id: 'herramientas', label: 'Herramientas' },
   ];
-  let ulpikCatalog = { areas: [], reports: [] };
+  let catalogs = {};
   let activeCategory = null;
   let activeArea = null;
   let searchQuery = '';
@@ -137,8 +140,8 @@
   function setQueryParams({ category = activeCategory, area = activeArea, q = searchQuery } = {}) {
     const params = new URLSearchParams();
     if (category) params.set('category', category);
-    if (category === ULPIK_CATEGORY && area) params.set('area', area);
-    if (q && category && category !== ULPIK_CATEGORY) params.set('q', q);
+    if (catalogs[category] && area) params.set('area', area);
+    if (q && category && !catalogs[category]) params.set('q', q);
     const next = params.toString();
     window.history.replaceState({}, '', next ? `/?${next}` : '/');
   }
@@ -166,22 +169,28 @@
     });
   }
 
-  function ulpikDashboards() {
-    return dashboards.filter((d) => d.category === ULPIK_CATEGORY);
+  // Catálogo (áreas + reportes) del comité abierto.
+  function activeCatalog() {
+    return catalogs[activeCategory] || { areas: [], reports: [] };
   }
 
-  function ulpikInArea(areaId) {
-    return ulpikDashboards().filter((d) =>
-      areaId === UNASSIGNED_AREA ? !d.reportType : d.area === areaId
+  function dashboardsInArea(areaId) {
+    return dashboards.filter((d) =>
+      d.category === activeCategory &&
+      (areaId === UNASSIGNED_AREA ? !d.reportType : d.area === areaId)
     );
   }
 
-  function ulpikAreas() {
-    const areas = [...ulpikCatalog.areas];
-    if (ulpikInArea(UNASSIGNED_AREA).length) {
+  function catalogAreas() {
+    const areas = [...activeCatalog().areas];
+    if (dashboardsInArea(UNASSIGNED_AREA).length) {
       areas.push({ id: UNASSIGNED_AREA, label: 'Sin asignar' });
     }
     return areas;
+  }
+
+  function categoryName(categoryId) {
+    return categories.find((c) => c.id === categoryId)?.label || 'Categoría';
   }
 
   function latestPeriod(items) {
@@ -190,7 +199,7 @@
 
   // Agrupa los dashboards del área en series: un reporte fijo (todos sus meses) o un evento.
   function buildSeries(areaId) {
-    const items = ulpikInArea(areaId);
+    const items = dashboardsInArea(areaId);
 
     if (areaId === UNASSIGNED_AREA) {
       return items.map((d) => ({
@@ -203,9 +212,9 @@
     }
 
     const groups = new Map();
-    ulpikCatalog.reports
+    activeCatalog().reports
       .filter((r) => r.area === areaId && !r.needsEventName)
-      .forEach((r) => groups.set(r.id, { key: r.id, label: r.label, monthly: true, entries: [] }));
+      .forEach((r) => groups.set(r.id, { key: r.id, label: r.label, hint: r.note, monthly: true, entries: [] }));
 
     items.forEach((d) => {
       const key = d.eventName ? `evento:${d.eventName.toLowerCase()}` : d.reportType;
@@ -245,7 +254,8 @@
     activeCategory = category.id;
     activeArea = null;
 
-    if (category.id === ULPIK_CATEGORY) {
+    if (catalogs[category.id]) {
+      areasTitle.textContent = category.label;
       showView(areasView);
       setQueryParams({ category: activeCategory, area: null });
       renderAreas();
@@ -260,22 +270,23 @@
     renderList();
   }
 
-  function openArea(areaId) {
-    const area = ulpikAreas().find((a) => a.id === areaId);
+  function openArea(categoryId, areaId) {
+    activeCategory = categoryId;
+    const area = catalogAreas().find((a) => a.id === areaId);
     if (!area) {
-      openCategory(ULPIK_CATEGORY);
+      openCategory(categoryId);
       return;
     }
 
-    activeCategory = ULPIK_CATEGORY;
     activeArea = area.id;
-    reportsTitle.textContent = area.label;
+    reportsTitle.textContent = area.owner ? `${area.label} · ${area.owner}` : area.label;
+    btnBackAreas.textContent = `← ${categoryName(categoryId)}`;
     reportsSubtitle.textContent =
       area.id === UNASSIGNED_AREA
         ? 'Dashboards del comité que aún no tienen reporte ni mes. Asígnalos desde Administración.'
         : 'Cada reporte muestra el último mes. Elige otro mes para ver el historial.';
     showView(reportsView);
-    setQueryParams({ category: ULPIK_CATEGORY, area: area.id });
+    setQueryParams({ category: categoryId, area: area.id });
     renderReports();
   }
 
@@ -304,11 +315,11 @@
   }
 
   function renderAreas() {
-    areaGrid.innerHTML = ulpikAreas()
+    areaGrid.innerHTML = catalogAreas()
       .map((area) => {
-        const items = ulpikInArea(area.id);
+        const items = dashboardsInArea(area.id);
         const meta = AREA_META[area.id] || {};
-        const reports = ulpikCatalog.reports
+        const reports = activeCatalog().reports
           .filter((r) => r.area === area.id && !r.needsEventName)
           .map((r) => r.label)
           .join(' · ');
@@ -324,6 +335,7 @@
               <span class="category-count">${items.length}</span>
             </div>
             <h2>${escapeHtml(area.label)}</h2>
+            ${area.owner ? `<span class="area-owner">Responsable: ${escapeHtml(area.owner)}</span>` : ''}
             <p>${escapeHtml(description)}</p>
             <span class="area-latest">${latest ? `Último: ${escapeHtml(periodLabel(latest))}` : 'Sin reportes todavía'}</span>
             <span class="category-cta">Ver reportes →</span>
@@ -367,7 +379,7 @@
         const note = s.note
           ? escapeHtml(s.note)
           : s.monthly
-            ? `Último: ${escapeHtml(latest.periodLabel)} · ${months} ${months === 1 ? 'mes' : 'meses'}`
+            ? `${s.hint ? `${escapeHtml(s.hint)} · ` : ''}Último: ${escapeHtml(latest.periodLabel)} · ${months} ${months === 1 ? 'mes' : 'meses'}`
             : escapeHtml(latest.periodLabel);
         const picker =
           months > 1
@@ -443,8 +455,8 @@
     if (Array.isArray(data.categories) && data.categories.length) {
       categories = data.categories;
     }
-    if (data.ulpik) {
-      ulpikCatalog = data.ulpik;
+    if (data.catalogs) {
+      catalogs = data.catalogs;
     }
   }
 
@@ -477,7 +489,7 @@
   areaGrid.addEventListener('click', (event) => {
     const card = event.target.closest('.area-card[data-area]');
     if (!card) return;
-    openArea(card.dataset.area);
+    openArea(activeCategory, card.dataset.area);
   });
 
   searchInput.addEventListener('input', () => {
@@ -509,7 +521,7 @@
     btn.addEventListener('click', showCategories);
   });
   document.querySelectorAll('[data-back="areas"]').forEach((btn) => {
-    btn.addEventListener('click', () => openCategory(ULPIK_CATEGORY));
+    btn.addEventListener('click', () => openCategory(activeCategory));
   });
 
   async function init() {
@@ -526,8 +538,8 @@
       window.open(`/view/${encodeURIComponent(id)}`, '_blank', 'noopener,noreferrer');
     }
 
-    if (category === ULPIK_CATEGORY && area) {
-      openArea(area);
+    if (catalogs[category] && area) {
+      openArea(category, area);
       return;
     }
 

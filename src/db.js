@@ -14,25 +14,46 @@ const CATEGORIES = [
 const CATEGORY_IDS = new Set(CATEGORIES.map((c) => c.id));
 const DEFAULT_CATEGORY = 'comite-ulpik';
 
-// Comité Ulpik: cada dashboard es un reporte fijo de un mes (periodo YYYY-MM).
+// Comités con catálogo: cada dashboard es un reporte fijo de un mes (periodo YYYY-MM),
+// agrupado por área. Las clasificaciones sin catálogo siguen siendo una lista libre.
 const ULPIK_CATEGORY = 'comite-ulpik';
+const MQI_CATEGORY = 'comite-mqi';
 
-const ULPIK_AREAS = [
-  { id: 'comercial', label: 'Comercial' },
-  { id: 'finanzas', label: 'Finanzas' },
-  { id: 'experiencia-cliente', label: 'Experiencia del cliente' },
-  { id: 'cursos', label: 'Cursos' },
-];
-
-const ULPIK_REPORTS = [
-  { id: 'reporte-comercial', label: 'Reporte Comercial', area: 'comercial' },
-  { id: 'profit-first', label: 'Profit First', area: 'finanzas' },
-  { id: 'flujo-caja', label: 'Flujo de Caja', area: 'finanzas' },
-  { id: 'sat-inicio-tramite', label: 'Sat. Inicio de trámite', area: 'experiencia-cliente' },
-  { id: 'sat-fin-tramite', label: 'Sat. Fin de trámite', area: 'experiencia-cliente' },
-  { id: 'sat-ulpik-priv', label: 'Sat. Ulpik PRIV', area: 'experiencia-cliente' },
-  { id: 'evento', label: 'Evento / Curso', area: 'cursos', needsEventName: true },
-];
+const CATALOGS = {
+  [ULPIK_CATEGORY]: {
+    areas: [
+      { id: 'comercial', label: 'Comercial' },
+      { id: 'finanzas', label: 'Finanzas' },
+      { id: 'experiencia-cliente', label: 'Experiencia del cliente' },
+      { id: 'cursos', label: 'Cursos' },
+    ],
+    reports: [
+      { id: 'reporte-comercial', label: 'Reporte Comercial', area: 'comercial' },
+      { id: 'profit-first', label: 'Profit First', area: 'finanzas' },
+      { id: 'flujo-caja', label: 'Flujo de Caja', area: 'finanzas' },
+      { id: 'sat-inicio-tramite', label: 'Sat. Inicio de trámite', area: 'experiencia-cliente' },
+      { id: 'sat-fin-tramite', label: 'Sat. Fin de trámite', area: 'experiencia-cliente' },
+      { id: 'sat-ulpik-priv', label: 'Sat. Ulpik PRIV', area: 'experiencia-cliente' },
+      { id: 'evento', label: 'Evento / Curso', area: 'cursos', needsEventName: true },
+    ],
+  },
+  [MQI_CATEGORY]: {
+    areas: [
+      { id: 'comercial', label: 'Comercial', owner: 'Pao' },
+      { id: 'finanzas', label: 'Finanzas', owner: 'Bea' },
+      { id: 'contenido-audiencia', label: 'Contenido y audiencia', owner: 'Mateo' },
+      { id: 'sostenibilidad', label: 'Sostenibilidad', owner: 'Nela' },
+    ],
+    reports: [
+      { id: 'informe-comercial', label: 'Informe comercial', area: 'comercial' },
+      { id: 'flujos-balances', label: 'Flujos y balances', area: 'finanzas' },
+      { id: 'de-shunsho-a-crack', label: 'De Shunsho a Crack', area: 'contenido-audiencia', note: 'YouTube + Spotify' },
+      { id: 'youtube-nicolas-munoz', label: 'YouTube Nicolás Muñoz', area: 'contenido-audiencia' },
+      { id: 'redes-sociales', label: 'Redes Sociales', area: 'contenido-audiencia', note: 'Las 5 cuentas' },
+      { id: 'proyecto-sostenibilidad', label: 'Proyecto de sostenibilidad', area: 'sostenibilidad' },
+    ],
+  },
+};
 
 const MONTHS_ES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -124,16 +145,18 @@ function parseNeedsAi(value) {
   return s === '1' || s === 'true' || s === 'on' || s === 'yes';
 }
 
-function isUlpik(category) {
-  return category === ULPIK_CATEGORY;
+function hasCatalog(category) {
+  return Object.prototype.hasOwnProperty.call(CATALOGS, category);
 }
 
-function getUlpikReport(reportType) {
-  return ULPIK_REPORTS.find((r) => r.id === reportType) || null;
+function getReport(category, reportType) {
+  if (!hasCatalog(category)) return null;
+  return CATALOGS[category].reports.find((r) => r.id === reportType) || null;
 }
 
-function ulpikAreaLabel(areaId) {
-  return ULPIK_AREAS.find((a) => a.id === areaId)?.label || areaId;
+function areaLabel(category, areaId) {
+  if (!hasCatalog(category)) return areaId;
+  return CATALOGS[category].areas.find((a) => a.id === areaId)?.label || areaId;
 }
 
 function periodLabel(period) {
@@ -142,10 +165,10 @@ function periodLabel(period) {
   return `${MONTHS_ES[Number(month) - 1]} ${year}`;
 }
 
-// Valida reporte + mes (+ nombre del evento) de un dashboard del Comité Ulpik.
-function normalizeUlpikFields({ reportType, period, eventName } = {}) {
+// Valida reporte + mes (+ nombre del evento) de un dashboard de un comité con catálogo.
+function normalizeReportFields(category, { reportType, period, eventName } = {}) {
   const errors = [];
-  const report = getUlpikReport(String(reportType || '').trim());
+  const report = getReport(category, String(reportType || '').trim());
   const normalizedPeriod = String(period || '').trim();
   const normalizedEvent = String(eventName || '').trim().replace(/\s+/g, ' ');
 
@@ -163,10 +186,10 @@ function normalizeUlpikFields({ reportType, period, eventName } = {}) {
   };
 }
 
-// Título, subtítulo y etiquetas se generan solos en el Comité Ulpik.
-function buildUlpikMeta({ reportType, period, eventName }) {
-  const report = getUlpikReport(reportType);
-  const area = ulpikAreaLabel(report.area);
+// Título, subtítulo y etiquetas se generan solos en los comités con catálogo.
+function buildReportMeta(category, { reportType, period, eventName }) {
+  const report = getReport(category, reportType);
+  const area = areaLabel(category, report.area);
   const when = periodLabel(period);
   const name = report.needsEventName ? eventName : report.label;
   return {
@@ -179,7 +202,7 @@ function buildUlpikMeta({ reportType, period, eventName }) {
 function rowToDashboard(row) {
   if (!row) return null;
   const category = normalizeCategory(row.category) || DEFAULT_CATEGORY;
-  const report = isUlpik(category) ? getUlpikReport(row.report_type) : null;
+  const report = getReport(category, row.report_type);
   return {
     id: row.id,
     title: row.title,
@@ -192,7 +215,7 @@ function rowToDashboard(row) {
     reportType: report?.id || null,
     reportLabel: report?.label || null,
     area: report?.area || null,
-    areaLabel: report ? ulpikAreaLabel(report.area) : null,
+    areaLabel: report ? areaLabel(category, report.area) : null,
     period: report ? row.period : null,
     periodLabel: report ? periodLabel(row.period) : null,
     eventName: report?.needsEventName ? row.event_name : null,
@@ -241,9 +264,9 @@ const statements = {
   `),
   remove: db.prepare(`DELETE FROM dashboards WHERE id = ?`),
   allTags: db.prepare(`SELECT tags FROM dashboards`),
-  findUlpik: db.prepare(`
+  findReport: db.prepare(`
     ${SELECT_DASHBOARD}
-    WHERE d.category = '${ULPIK_CATEGORY}'
+    WHERE d.category = @category
       AND d.report_type = @report_type
       AND d.period = @period
       AND lower(coalesce(d.event_name, '')) = lower(@event_name)
@@ -298,10 +321,11 @@ function getDashboard(id) {
   return rowToDashboard(statements.getById.get(id));
 }
 
-// Devuelve el dashboard que ya ocupa ese reporte + mes (+ evento), si existe.
-function findUlpikDuplicate({ reportType, period, eventName, excludeId = '' }) {
+// Devuelve el dashboard que ya ocupa ese reporte + mes (+ evento) en el comité, si existe.
+function findReportDuplicate({ category, reportType, period, eventName, excludeId = '' }) {
   return rowToDashboard(
-    statements.findUlpik.get({
+    statements.findReport.get({
+      category,
       report_type: reportType,
       period,
       event_name: eventName || '',
@@ -310,10 +334,10 @@ function findUlpikDuplicate({ reportType, period, eventName, excludeId = '' }) {
   );
 }
 
-// En el Comité Ulpik el título, subtítulo y etiquetas salen del reporte y el mes.
+// En los comités con catálogo el título, subtítulo y etiquetas salen del reporte y el mes.
 function resolveStoredMeta({ title, subtitle, tags, category, reportType, period, eventName }) {
-  if (isUlpik(category) && reportType) {
-    const meta = buildUlpikMeta({ reportType, period, eventName });
+  if (getReport(category, reportType)) {
+    const meta = buildReportMeta(category, { reportType, period, eventName });
     return {
       title: meta.title,
       subtitle: meta.subtitle,
@@ -413,14 +437,14 @@ module.exports = {
   CATEGORIES,
   DEFAULT_CATEGORY,
   ULPIK_CATEGORY,
-  ULPIK_AREAS,
-  ULPIK_REPORTS,
-  isUlpik,
+  MQI_CATEGORY,
+  CATALOGS,
+  hasCatalog,
   normalizeCategory,
   categoryLabel,
   parseNeedsAi,
-  normalizeUlpikFields,
-  findUlpikDuplicate,
+  normalizeReportFields,
+  findReportDuplicate,
   listDashboards,
   getDashboard,
   createDashboard,

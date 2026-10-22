@@ -85,6 +85,21 @@
   background: linear-gradient(145deg, #7c2d12, #fb923c);
 }
 
+.category-mark.is-area-contenido {
+  background: linear-gradient(145deg, #831843, #f472b6);
+}
+
+.category-mark.is-area-sostenibilidad {
+  background: linear-gradient(145deg, #365314, #a3e635);
+}
+
+.area-owner {
+  margin-top: -0.6rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+}
+
 .category-mark.is-area-none {
   background: linear-gradient(145deg, #334155, #94a3b8);
 }
