@@ -196,16 +196,38 @@ async function callOpenAI({ messages, maxTokens, model }) {
     payload.response_format = { type: 'json_object' };
   }
 
-  const response = await fetch(OPENAI_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey.trim()}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  const send = () =>
+    fetch(OPENAI_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey.trim()}`,
+      },
+      body: JSON.stringify(payload),
+    });
 
-  const data = await response.json().catch(() => ({}));
+  let response = await send();
+  let data = await response.json().catch(() => ({}));
+
+  // Algunos modelos rechazan max_tokens o una temperatura distinta de la por defecto:
+  // se ajusta el payload y se reintenta una vez.
+  if (response.status === 400) {
+    const message = String(data?.error?.message || '');
+    let retry = false;
+    if (/max_completion_tokens/.test(message) && payload.max_tokens) {
+      payload.max_completion_tokens = payload.max_tokens;
+      delete payload.max_tokens;
+      retry = true;
+    }
+    if (/temperature/i.test(message) && 'temperature' in payload) {
+      delete payload.temperature;
+      retry = true;
+    }
+    if (retry) {
+      response = await send();
+      data = await response.json().catch(() => ({}));
+    }
+  }
 
   if (!response.ok) {
     const detail =
@@ -292,3 +314,5 @@ router.post('/chat', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.callOpenAI = callOpenAI;
+module.exports.checkRateLimit = checkRateLimit;

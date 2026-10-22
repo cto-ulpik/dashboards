@@ -16,6 +16,8 @@
   const listSubtitle = document.getElementById('list-subtitle');
   const listCount = document.getElementById('list-count');
   const btnBackCategories = document.getElementById('btn-back-categories');
+  const programsGrid = document.getElementById('programs-grid');
+  const programsRestTitle = document.getElementById('programs-rest-title');
   const toastEl = document.getElementById('toast');
 
   const UNASSIGNED_AREA = 'sin-asignar';
@@ -46,6 +48,20 @@
     cursos: { markClass: 'is-area-cursos', description: 'Eventos, masterclass y cursos.' },
     'contenido-audiencia': { markClass: 'is-area-contenido' },
     sostenibilidad: { markClass: 'is-area-sostenibilidad' },
+  };
+
+  // Programas propios del sistema (no son HTML subidos): se muestran como cuadros
+  // grandes encima de la lista de su categoría.
+  const PROGRAMS = {
+    herramientas: [
+      {
+        id: 'auditor-senadi',
+        label: 'Auditor SENADI',
+        description: 'Revisa formularios de registro marcario antes de subirlos. Base de observaciones compartida por el equipo legal.',
+        url: '/herramientas/auditor-senadi',
+        markClass: 'is-program-senadi',
+      },
+    ],
   };
 
   let dashboards = [];
@@ -154,7 +170,27 @@
   }
 
   function countByCategory(categoryId) {
-    return dashboards.filter((d) => d.category === categoryId).length;
+    const programs = PROGRAMS[categoryId]?.length || 0;
+    return programs + dashboards.filter((d) => d.category === categoryId).length;
+  }
+
+  function renderPrograms(categoryId) {
+    const programs = PROGRAMS[categoryId] || [];
+    programsGrid.hidden = !programs.length;
+    programsRestTitle.hidden = !programs.length;
+    programsGrid.innerHTML = programs
+      .map((p) => `
+        <a class="category-card area-card program-card" href="${escapeHtml(p.url)}">
+          <div class="category-card-top">
+            <div class="category-mark ${escapeHtml(p.markClass || '')}" aria-hidden="true"></div>
+            <span class="program-tag">Programa</span>
+          </div>
+          <h2>${escapeHtml(p.label)}</h2>
+          <p>${escapeHtml(p.description)}</p>
+          <span class="category-cta">Abrir →</span>
+        </a>
+      `)
+      .join('');
   }
 
   function filteredInCategory() {
@@ -267,6 +303,7 @@
       CATEGORY_META[category.id]?.description || 'Dashboards de esta categoría';
     showView(listView);
     setQueryParams({ category: activeCategory });
+    renderPrograms(category.id);
     renderList();
   }
 
