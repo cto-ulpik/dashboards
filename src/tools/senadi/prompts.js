@@ -57,14 +57,11 @@ Instrucciones:
 - Usa el número de trámite y la denominación que te proporcione el usuario; si no los da, deja un marcador de texto entre corchetes indicando qué falta completar.
 - Lee la notificación de observación y redacta cada punto de "Alcance" respondiendo PUNTUALMENTE a lo que el SENADI pidió (adjuntar documento, aclarar algo, corregir un dato, hacer un pago, retirar un elemento, etc.), en primera persona plural ("se realiza...", "solicitamos...").
 - No inventes hechos que no estén en la observación ni en los datos proporcionados; si falta un dato imprescindible para completar el escrito (ej. el nombre exacto del documento que se va a adjuntar), indícalo entre corchetes como "[COMPLETAR: ...]" en vez de inventarlo.
-- Termina el escrito en el párrafo de la petición. NO incluyas despedida, "Atentamente" ni firma: se agregan automáticamente después con el nombre del abogado o abogada que firma.
+- Termina el escrito en el párrafo de la petición. NO incluyas despedida, "Atentamente" ni firma: se agregan automáticamente después.
 - Responde ÚNICAMENTE con el texto final del escrito, sin explicaciones adicionales, sin backticks ni markdown.`;
 
-// Cierre y firma del alcance. El nombre lo escribe quien firma; no lo genera la IA.
-function alcanceFirma({ firmante, cierre }) {
-  const autorizacion = cierre === 'autorizado' ? 'legalmente autorizado' : 'legalmente autorizada';
-  return `Atentamente, ${autorizacion}\n${firmante}`;
-}
+// Cierre y firma del alcance: los agrega el servidor, no la IA.
+const ALCANCE_FIRMA = 'Atentamente, legalmente autorizada\nAb. Marianela Espinoza';
 
 // Contenido del mensaje de auditoría (formato OpenAI: texto + imagen opcional).
 function auditoriaContent({ textoFormulario, textoDescuento, textoNombramiento, logo }) {
@@ -110,5 +107,5 @@ module.exports = {
   OBSERVACION_SYSTEM,
   ALCANCE_SYSTEM,
   alcanceUser,
-  alcanceFirma,
+  ALCANCE_FIRMA,
 };

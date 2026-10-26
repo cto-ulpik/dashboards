@@ -127,20 +127,7 @@
 
       <label class="field-label" for="alcance-obs">Texto de la observación recibida</label>
       <textarea id="alcance-obs" rows="7" placeholder="Pega aquí el texto de la notificación del SENADI…"></textarea>
-
-      <div class="row2">
-        <div>
-          <label class="field-label" for="alcance-firmante">Abogado/a que firma <span class="req">*</span></label>
-          <input type="text" id="alcance-firmante" maxlength="100" value="Ab. " placeholder="Ab. Nombre Apellido" required>
-        </div>
-        <div>
-          <label class="field-label" for="alcance-cierre">Cierre</label>
-          <select id="alcance-cierre">
-            <option value="autorizada">Atentamente, legalmente autorizada</option>
-            <option value="autorizado">Atentamente, legalmente autorizado</option>
-          </select>
-        </div>
-      </div>
+      <p class="sub" style="margin:8px 0 0;">El escrito se firma como <b>Ab. Marianela Espinoza</b>.</p>
 
       <button class="primary" id="btn-generar-alcance">Generar borrador</button>
       <div class="loading" id="loading-alcance" style="display:none;">
@@ -161,6 +148,6 @@
   </footer>
 </div>
 
-<script src="/tools/auditor-senadi/auditor.js?v=2"></script>
+<script src="/tools/auditor-senadi/auditor.js?v=3"></script>
 </body>
 </html>
