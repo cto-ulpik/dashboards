@@ -134,15 +134,11 @@ function contentToSearchText(content) {
   return '';
 }
 
+// OpenAI solo acepta response_format json_object si los mensajes mencionan "json";
+// frases como "responde únicamente" también aparecen en pedidos de texto libre.
 function wantsJsonObject(messages) {
   const joined = messages.map((m) => contentToSearchText(m.content)).join('\n').toLowerCase();
-  return (
-    joined.includes('json') ||
-    joined.includes('formato obligatorio') ||
-    joined.includes('responde únicamente') ||
-    joined.includes('unicamente con un objeto json') ||
-    joined.includes('únicamente con un objeto json')
-  );
+  return joined.includes('json');
 }
 
 function resolveModel(requested) {
@@ -172,7 +168,8 @@ function buildTokenLimit(model, maxTokens) {
     : { max_tokens: value };
 }
 
-async function callOpenAI({ messages, maxTokens, model }) {
+// json: true/false fuerza o desactiva el modo JSON; sin indicarlo se deduce de los mensajes.
+async function callOpenAI({ messages, maxTokens, model, json }) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey || !apiKey.trim()) {
     const err = new Error('OPENAI_API_KEY no está configurada en el servidor (.env)');
@@ -192,7 +189,7 @@ async function callOpenAI({ messages, maxTokens, model }) {
     payload.temperature = 0.2;
   }
 
-  if (wantsJsonObject(messages)) {
+  if (json ?? wantsJsonObject(messages)) {
     payload.response_format = { type: 'json_object' };
   }
 

@@ -18,17 +18,12 @@ function extraerJSON(texto) {
   return JSON.parse(t);
 }
 
-// "Ab." solo no cuenta: tiene que haber un nombre después del título.
-function hasSignerName(firmante) {
-  const nombre = firmante.replace(/^ab(og(ado|ada))?\.?\s*/i, '');
-  return (nombre.match(/\p{L}/gu) || []).length >= 3;
-}
-
 function text(value) {
   return String(value ?? '').slice(0, MAX_TEXT).trim();
 }
 
-async function askAi(system, content, maxTokens = 4000) {
+// json: la respuesta esperada es un objeto JSON (auditoría, observación) o texto libre (alcance).
+async function askAi(system, content, { maxTokens = 4000, json }) {
   if (!checkRateLimit('tool:auditor-senadi')) {
     const err = new Error('Demasiadas consultas de IA. Espera un minuto.');
     err.status = 429;
@@ -40,6 +35,7 @@ async function askAi(system, content, maxTokens = 4000) {
       { role: 'user', content },
     ],
     maxTokens,
+    json,
   });
   return answer;
 }
@@ -60,7 +56,7 @@ router.post('/senadi/observaciones', async (req, res) => {
     if (!textoOriginal) {
       return res.status(400).json({ error: 'Pega el texto de la observación o sube el PDF primero.' });
     }
-    const raw = await askAi(prompts.OBSERVACION_SYSTEM, textoOriginal, 1500);
+    const raw = await askAi(prompts.OBSERVACION_SYSTEM, textoOriginal, { maxTokens: 1500, json: true });
     const json = extraerJSON(raw);
     const observacion = store.addObservation({
       ...json,
@@ -114,7 +110,7 @@ router.post('/senadi/auditar', async (req, res) => {
       textoNombramiento: text(req.body?.textoNombramiento),
       logo,
     });
-    const raw = await askAi(prompts.auditoriaSystem(store.listObservations()), content);
+    const raw = await askAi(prompts.auditoriaSystem(store.listObservations()), content, { json: true });
     res.json(extraerJSON(raw));
   } catch (err) {
     fail(res, err, 'No se pudo completar la auditoría');
@@ -127,10 +123,6 @@ router.post('/senadi/alcance', async (req, res) => {
     if (!observacion) {
       return res.status(400).json({ error: 'Pega el texto de la observación recibida.' });
     }
-    const firmante = String(req.body?.firmante ?? '').trim().replace(/\s+/g, ' ').slice(0, 100);
-    if (!hasSignerName(firmante)) {
-      return res.status(400).json({ error: 'Escribe el nombre del abogado o abogada que firma el alcance.' });
-    }
     const borrador = await askAi(
       prompts.ALCANCE_SYSTEM,
       prompts.alcanceUser({
@@ -138,10 +130,9 @@ router.post('/senadi/alcance', async (req, res) => {
         denominacion: text(req.body?.denominacion),
         observacion,
       }),
-      2500
+      { maxTokens: 2500, json: false }
     );
-    const firma = prompts.alcanceFirma({ firmante, cierre: req.body?.cierre });
-    res.json({ borrador: `${borrador.trim()}\n\n${firma}` });
+    res.json({ borrador: `${borrador.trim()}\n\n${prompts.ALCANCE_FIRMA}` });
   } catch (err) {
     fail(res, err, 'No se pudo generar el borrador');
   }
