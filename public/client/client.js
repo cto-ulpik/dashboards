@@ -48,6 +48,7 @@
     cursos: { markClass: 'is-area-cursos', description: 'Eventos, masterclass y cursos.' },
     'contenido-audiencia': { markClass: 'is-area-contenido' },
     sostenibilidad: { markClass: 'is-area-sostenibilidad' },
+    tecnologia: { markClass: 'is-area-tecnologia' },
   };
 
   // Programas propios del sistema (no son HTML subidos): se muestran como cuadros
