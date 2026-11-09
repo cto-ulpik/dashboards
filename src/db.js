@@ -52,7 +52,7 @@ const CATALOGS = {
       { id: 'youtube-nicolas-munoz', label: 'YouTube Nicolás Muñoz', area: 'contenido-audiencia' },
       { id: 'redes-sociales', label: 'Redes Sociales', area: 'contenido-audiencia', note: 'Las 5 cuentas' },
       { id: 'proyecto-sostenibilidad', label: 'Proyecto de sostenibilidad', area: 'sostenibilidad' },
-      { id: 'informe-tecnologia', label: 'Informe de tecnología', area: 'tecnologia' },
+      { id: 'pagina-web', label: 'Página web', area: 'tecnologia' },
     ],
   },
 };
