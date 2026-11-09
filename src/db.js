@@ -43,6 +43,7 @@ const CATALOGS = {
       { id: 'finanzas', label: 'Finanzas', owner: 'Bea' },
       { id: 'contenido-audiencia', label: 'Contenido y audiencia', owner: 'Mateo' },
       { id: 'sostenibilidad', label: 'Sostenibilidad', owner: 'Nela' },
+      { id: 'tecnologia', label: 'Tecnología' },
     ],
     reports: [
       { id: 'informe-comercial', label: 'Informe comercial', area: 'comercial' },
@@ -51,6 +52,7 @@ const CATALOGS = {
       { id: 'youtube-nicolas-munoz', label: 'YouTube Nicolás Muñoz', area: 'contenido-audiencia' },
       { id: 'redes-sociales', label: 'Redes Sociales', area: 'contenido-audiencia', note: 'Las 5 cuentas' },
       { id: 'proyecto-sostenibilidad', label: 'Proyecto de sostenibilidad', area: 'sostenibilidad' },
+      { id: 'informe-tecnologia', label: 'Informe de tecnología', area: 'tecnologia' },
     ],
   },
 };
